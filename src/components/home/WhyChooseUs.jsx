@@ -1,6 +1,7 @@
 import React from "react";
 import { Shield, Radar, FileSearch, Globe2, Cpu, Headphones } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePhotoUrl } from "@/utils/photoStorage";
 
 const REASONS = [
   {
@@ -36,6 +37,8 @@ const REASONS = [
 ];
 
 export default function WhyChooseUs() {
+  const whyUsImg = usePhotoUrl("why_us");
+
   return (
     <section className="py-24 bg-steel">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
@@ -52,7 +55,7 @@ export default function WhyChooseUs() {
               We combine deep logistics expertise with modern technology to deliver seamless, reliable, and transparent shipping solutions for businesses across Africa and the world.
             </p>
             <img
-              src="https://images.unsplash.com/photo-1519003722824-194d4455a60c?auto=format&fit=crop&w=1200&q=80"
+              src={whyUsImg}
               alt="Modern logistics and cargo transportation"
               className="mt-8 rounded-xl w-full object-cover"
             />

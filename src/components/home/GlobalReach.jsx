@@ -2,26 +2,31 @@ import React from "react";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const MODES = [
-  {
-    title: "Bike Dispatch",
-    desc: "Fast pickup and delivery for documents, parcels, food items, and light packages.",
-    image: "https://images.unsplash.com/photo-1581092335878-2d9ff86ca2bf?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    title: "Van Delivery",
-    desc: "Reliable movement for cartons, business supplies, fragile goods, and medium-size deliveries.",
-    image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    title: "Truck Logistics",
-    desc: "Bulk goods, equipment, furniture, and heavy delivery support for businesses and individuals.",
-    image: "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?auto=format&fit=crop&w=900&q=80",
-  },
-];
+import { usePhotoUrl } from "@/utils/photoStorage";
 
 export default function GlobalReach() {
+  const bikeImg = usePhotoUrl("service_bike");
+  const vanImg = usePhotoUrl("service_van");
+  const truckImg = usePhotoUrl("service_truck");
+
+  const modes = [
+    {
+      title: "Bike Dispatch",
+      desc: "Fast pickup and delivery for documents, parcels, food items, and light packages.",
+      image: bikeImg,
+    },
+    {
+      title: "Van Delivery",
+      desc: "Reliable movement for cartons, business supplies, fragile goods, and medium-size deliveries.",
+      image: vanImg,
+    },
+    {
+      title: "Truck Logistics",
+      desc: "Bulk goods, equipment, furniture, and heavy delivery support for businesses and individuals.",
+      image: truckImg,
+    },
+  ];
+
   return (
     <section className="py-24 bg-navy overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10">
@@ -31,7 +36,8 @@ export default function GlobalReach() {
           </span>
           <h2 className="text-3xl lg:text-4xl font-heading font-bold text-white mt-3">
             Local & Business Logistics
-Pickup, Delivery & Goods Movement
+            <br />
+            Pickup, Delivery & Goods Movement
           </h2>
           <p className="text-white/50 max-w-xl mx-auto mt-4 leading-relaxed">
             Whether by air, sea, or road — we deliver your goods with precision, speed, and full visibility.
@@ -39,7 +45,7 @@ Pickup, Delivery & Goods Movement
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">
-          {MODES.map((mode, i) => (
+          {modes.map((mode, i) => (
             <motion.div
               key={mode.title}
               initial={{ opacity: 0, y: 30 }}

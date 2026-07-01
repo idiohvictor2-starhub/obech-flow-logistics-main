@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, ArrowRight, Clock, Globe, Plane, Eye } from "lucide-react";
 import { motion } from "framer-motion";
+import { usePhotoUrl } from "@/utils/photoStorage";
 
 const STATS = [
   { icon: Clock, value: "8+", label: "Years Experience" },
@@ -13,6 +14,7 @@ const STATS = [
 export default function HeroSection() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const navigate = useNavigate();
+  const heroBg = usePhotoUrl("hero_bg");
 
   const handleTrack = (e) => {
     e.preventDefault();
@@ -26,10 +28,10 @@ export default function HeroSection() {
       {/* Background */}
       <div className="absolute inset-0">
         <img
-  src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=1600&q=80"
-  alt="Logistics warehouse with packages and delivery operations"
-  className="w-full h-full object-cover"
-/>
+          src={heroBg}
+          alt="Logistics warehouse with packages and delivery operations"
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-navy/70" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-navy/30" />
       </div>

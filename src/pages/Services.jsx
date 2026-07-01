@@ -2,53 +2,59 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Plane, Ship, Truck, FileCheck, MapPin, PackageCheck, Warehouse, Briefcase, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-
-const SERVICES = [
-  {
-    icon: Truck,
-    title: "Bike Dispatch",
-    desc: "Fast pickup and delivery for documents, small parcels, food items, fashion orders, and lightweight goods.",
-    features: ["Same-day pickup", "Fast city delivery", "Small parcels", "Documents & light goods"],
-    image: "https://images.unsplash.com/photo-1581092335878-2d9ff86ca2bf?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    icon: PackageCheck,
-    title: "Van Delivery",
-    desc: "Reliable delivery for medium-sized goods, cartons, fragile items, office supplies, and business packages.",
-    features: ["Medium goods", "Fragile handling", "Carton delivery", "Business supplies"],
-    image: "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    icon: Truck,
-    title: "Truck Logistics",
-    desc: "Truck pickup and delivery for bulk goods, furniture, appliances, equipment, and heavy commercial items.",
-    features: ["Bulk movement", "Furniture delivery", "Equipment transport", "Heavy goods"],
-    image: "https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    icon: MapPin,
-    title: "Pickup & Delivery Booking",
-    desc: "Customers can book pickups for goods even when they do not know the exact weight. Our team reviews and recommends the best vehicle.",
-    features: ["Easy booking", "Bike, van or truck", "Weight optional", "Customer support"],
-    image: null,
-  },
-  {
-    icon: FileCheck,
-    title: "Delivery Tracking",
-    desc: "Track deliveries from booking confirmation to pickup, transit, arrival, and final delivery.",
-    features: ["Tracking number", "Status updates", "Delivery timeline", "Admin updates"],
-    image: null,
-  },
-  {
-    icon: Warehouse,
-    title: "Business Logistics Support",
-    desc: "Logistics support for vendors, online sellers, SMEs, offices, stores, and corporate clients.",
-    features: ["Vendor delivery", "SME logistics", "Regular pickups", "Business accounts"],
-    image: "https://images.unsplash.com/photo-1515168833906-d2a3b82b1a48?auto=format&fit=crop&w=900&q=80",
-  },
-];
+import { usePhotoUrl } from "@/utils/photoStorage";
 
 export default function Services() {
+  const bikeImg = usePhotoUrl("service_bike");
+  const vanImg = usePhotoUrl("service_van");
+  const truckImg = usePhotoUrl("service_truck");
+  const businessImg = usePhotoUrl("service_business");
+
+  const services = [
+    {
+      icon: Truck,
+      title: "Bike Dispatch",
+      desc: "Fast pickup and delivery for documents, small parcels, food items, fashion orders, and lightweight goods.",
+      features: ["Same-day pickup", "Fast city delivery", "Small parcels", "Documents & light goods"],
+      image: bikeImg,
+    },
+    {
+      icon: PackageCheck,
+      title: "Van Delivery",
+      desc: "Reliable delivery for medium-sized goods, cartons, fragile items, office supplies, and business packages.",
+      features: ["Medium goods", "Fragile handling", "Carton delivery", "Business supplies"],
+      image: vanImg,
+    },
+    {
+      icon: Truck,
+      title: "Truck Logistics",
+      desc: "Truck pickup and delivery for bulk goods, furniture, appliances, equipment, and heavy commercial items.",
+      features: ["Bulk movement", "Furniture delivery", "Equipment transport", "Heavy goods"],
+      image: truckImg,
+    },
+    {
+      icon: MapPin,
+      title: "Pickup & Delivery Booking",
+      desc: "Customers can book pickups for goods even when they do not know the exact weight. Our team reviews and recommends the best vehicle.",
+      features: ["Easy booking", "Bike, van or truck", "Weight optional", "Customer support"],
+      image: null,
+    },
+    {
+      icon: FileCheck,
+      title: "Delivery Tracking",
+      desc: "Track deliveries from booking confirmation to pickup, transit, arrival, and final delivery.",
+      features: ["Tracking number", "Status updates", "Delivery timeline", "Admin updates"],
+      image: null,
+    },
+    {
+      icon: Warehouse,
+      title: "Business Logistics Support",
+      desc: "Logistics support for vendors, online sellers, SMEs, offices, stores, and corporate clients.",
+      features: ["Vendor delivery", "SME logistics", "Regular pickups", "Business accounts"],
+      image: businessImg,
+    },
+  ];
+
   return (
     <>
       {/* Hero */}
@@ -69,7 +75,7 @@ export default function Services() {
       {/* Services */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 space-y-8">
-          {SERVICES.map((service, i) => (
+          {services.map((service, i) => (
             <motion.div
               key={service.title}
               initial={{ opacity: 0, y: 30 }}

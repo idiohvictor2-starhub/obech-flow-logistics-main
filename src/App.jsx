@@ -15,9 +15,16 @@ import Contact from "@/pages/Contact";
 import SiteLayout from "@/components/layout/SiteLayout";
 
 import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminBookings from "@/pages/admin/AdminBookings";
 import AdminTracking from "@/pages/admin/AdminTracking";
+import AdminPhotos from "@/pages/admin/AdminPhotos";
+import AdminCustomers from "@/pages/admin/AdminCustomers";
+import AdminDrivers from "@/pages/admin/AdminDrivers";
+import AdminVehicles from "@/pages/admin/AdminVehicles";
+import AdminReports from "@/pages/admin/AdminReports";
+import AdminSettings from "@/pages/admin/AdminSettings";
 
 function App() {
   return (
@@ -37,9 +44,18 @@ function App() {
           </Route>
 
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/bookings" element={<AdminBookings />} />
-          <Route path="/admin/tracking" element={<AdminTracking />} />
+          
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/bookings" element={<AdminBookings />} />
+            <Route path="/admin/tracking" element={<AdminTracking />} />
+            <Route path="/admin/photos" element={<AdminPhotos />} />
+            <Route path="/admin/customers" element={<AdminCustomers />} />
+            <Route path="/admin/drivers" element={<AdminDrivers />} />
+            <Route path="/admin/vehicles" element={<AdminVehicles />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
+          </Route>
 
           <Route path="*" element={<PageNotFound />} />
         </Routes>
