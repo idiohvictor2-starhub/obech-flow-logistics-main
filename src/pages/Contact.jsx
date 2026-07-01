@@ -79,7 +79,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-xs text-white/40 uppercase tracking-wider">Location</p>
-                      <p className="text-white text-sm mt-1">Lagos, Nigeria</p>
+                      <p className="text-white text-sm mt-1">21 road opposite I close, Festac town, Lagos and 2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261. Beside Greenews Hotel.Our new drop off location"</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -88,8 +88,8 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-xs text-white/40 uppercase tracking-wider">Phone</p>
-                      <a href="tel:+234XXXXXXXX" className="text-white text-sm mt-1 block hover:text-orange transition-colors">
-                        +234 XXX XXX XXXX
+                      <a href="tel:+2349066755440" className="text-white text-sm mt-1 block hover:text-orange transition-colors">
+                        +2349066755440
                       </a>
                     </div>
                   </div>
