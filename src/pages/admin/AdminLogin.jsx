@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Loader2, KeyRound } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -10,17 +11,20 @@ export default function AdminLogin() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  // Auto-redirect if already authenticated
   useEffect(() => {
-    if (localStorage.getItem("obech_admin_auth") === "true") {
-      navigate("/admin", { replace: true });
-    }
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/admin", { replace: true });
+      }
+    };
+    checkAuth();
   }, [navigate]);
 
   const set = (field) => (e) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.email || !form.password) {
@@ -34,26 +38,26 @@ export default function AdminLogin() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      if (
-        form.email.trim().toLowerCase() === "admin@obechflow.com" &&
-        form.password === "admin123"
-      ) {
-        localStorage.setItem("obech_admin_auth", "true");
-        toast({
-          title: "Access Granted",
-          description: "Welcome back to the Obech Flow Admin Portal.",
-        });
-        navigate("/admin");
-      } else {
-        toast({
-          title: "Invalid Credentials",
-          description: "Please verify your admin login email and password.",
-          variant: "destructive",
-        });
-      }
-      setLoading(false);
-    }, 800);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: form.email,
+      password: form.password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      toast({
+        title: "Invalid Credentials",
+        description: error.message || "Please verify your admin login email and password.",
+        variant: "destructive",
+      });
+    } else if (data.session) {
+      toast({
+        title: "Access Granted",
+        description: "Welcome back to the Obech Flow Admin Portal.",
+      });
+      navigate("/admin", { replace: true });
+    }
   };
 
   return (
@@ -123,18 +127,6 @@ export default function AdminLogin() {
               {loading ? "Verifying Credentials..." : "Authenticate"}
             </button>
           </form>
-
-          {/* Quick Helper Badge */}
-          <div className="mt-8 pt-6 border-t border-white/5 flex flex-col gap-2 text-center">
-            <span className="text-[10px] uppercase tracking-widest text-white/40 font-mono">
-              Demo Credentials
-            </span>
-            <div className="inline-flex items-center justify-center gap-2 bg-white/5 rounded-lg py-2 px-3 text-xs text-white/60 font-mono">
-              <span>admin@obechflow.com</span>
-              <span className="opacity-20">|</span>
-              <span>admin123</span>
-            </div>
-          </div>
         </div>
       </motion.div>
     </div>

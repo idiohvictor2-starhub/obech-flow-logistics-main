@@ -14,9 +14,12 @@ import {
   Menu,
   X,
   User,
-  ChevronRight
+  ChevronRight,
+  Globe,
+  CircleDollarSign
 } from "lucide-react";
 import logo from "../../assets/logo.png";
+import { supabase } from "@/lib/supabase";
 
 const ADMIN_LINKS = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -26,6 +29,8 @@ const ADMIN_LINKS = [
   { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Drivers & Riders", path: "/admin/drivers", icon: ShieldCheck },
   { label: "Vehicles/Fleet", path: "/admin/vehicles", icon: Truck },
+  { label: "Locations/Hubs", path: "/admin/locations", icon: Globe },
+  { label: "Pricing Rules", path: "/admin/pricing", icon: CircleDollarSign },
   { label: "Reports", path: "/admin/reports", icon: BarChart3 },
   { label: "Settings", path: "/admin/settings", icon: Settings },
 ];
@@ -34,19 +39,45 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isAuthenticated = localStorage.getItem("obech_admin_auth") === "true";
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+      setUser(session?.user || null);
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Auto-close mobile drawer when route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  if (!isAuthenticated) {
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-navy flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-steel border-t-orange rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isAuthenticated === false) {
     return <Navigate to="/admin/login" replace />;
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("obech_admin_auth");
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     navigate("/admin/login", { replace: true });
   };
 
@@ -99,7 +130,7 @@ export default function AdminLayout() {
             </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-white truncate">Administrator</p>
-              <p className="text-[10px] text-white/40 truncate">admin@obechflow.com</p>
+              <p className="text-[10px] text-white/40 truncate">{user?.email || "admin@obechflow.com"}</p>
             </div>
           </div>
 
