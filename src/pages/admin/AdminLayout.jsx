@@ -18,7 +18,6 @@ import {
   Globe,
   CircleDollarSign
 } from "lucide-react";
-import logo from "../../assets/logo.png";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_LINKS = [
@@ -93,7 +92,7 @@ export default function AdminLayout() {
         {/* Sidebar Header */}
         <div className="h-20 flex items-center gap-3 px-6 border-b border-white/5">
           <Link to="/" className="flex items-center gap-2 group">
-            <img src={logo} alt="Obech Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo.png" alt="Obech Logo" className="w-8 h-8 object-contain" />
             <span className="font-heading font-black text-lg tracking-tight text-white group-hover:text-orange transition-colors">
               Obech Admin
             </span>
@@ -158,7 +157,7 @@ export default function AdminLayout() {
       >
         <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="Obech Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo.png" alt="Obech Logo" className="w-8 h-8 object-contain" />
             <span className="font-heading font-black text-lg tracking-tight">Obech Admin</span>
           </div>
           <button onClick={() => setMobileOpen(false)} className="text-white/60 hover:text-white">

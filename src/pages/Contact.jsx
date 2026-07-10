@@ -77,9 +77,20 @@ export default function Contact() {
                     <div className="w-10 h-10 rounded-lg bg-orange/10 flex items-center justify-center shrink-0">
                       <MapPin size={18} className="text-orange" />
                     </div>
-                    <div>
-                      <p className="text-xs text-white/40 uppercase tracking-wider">Location</p>
-                      <p className="text-white text-sm mt-1">21 road opposite I close, Festac town, Lagos and 2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261. Beside Greenews Hotel.Our new drop off location"</p>
+                    <div className="flex flex-col gap-4">
+                      <div>
+                        <p className="text-xs text-white/40 uppercase tracking-wider">Main Office</p>
+                        <a href="https://maps.google.com/?q=21+road+opposite+I+close,+Festac+town,+Lagos" target="_blank" rel="noopener noreferrer" className="text-white text-sm mt-1 block hover:text-orange transition-colors">
+                          21 road opposite I close, Festac town, Lagos
+                        </a>
+                      </div>
+                      <div>
+                        <p className="text-xs text-white/40 uppercase tracking-wider">Drop-off Location</p>
+                        <a href="https://maps.google.com/?q=2+Kunle+Akinosi+St,+Orile+Oshodi+102214,+Lagos+100261" target="_blank" rel="noopener noreferrer" className="text-white text-sm mt-1 block hover:text-orange transition-colors">
+                          2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261<br/>
+                          <span className="text-white/60 text-xs">(Beside Greenews Hotel)</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -99,8 +110,11 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-xs text-white/40 uppercase tracking-wider">Email</p>
-                      <a href="mailto:info@obechgloballogistics.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
-                        info@obechgloballogistics.com
+                      <a href="mailto:info@obechlogistics.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
+                        info@obechlogistics.com
+                      </a>
+                      <a href="mailto:obechlogistics@gmail.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
+                        obechlogistics@gmail.com
                       </a>
                     </div>
                   </div>

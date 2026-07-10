@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import logo from "../../assets/logo.png";
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Services", path: "/services" },
-  { label: "Tracking", path: "/tracking" },
+  { label: "Tracking", path: "/track" },
   { label: "About", path: "/about" },
   { label: "Contact", path: "/contact" },
 ];
@@ -38,11 +37,14 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-           src={logo}
-           alt="OG Logo"
-            className="w-10 h-10 object-contain"
+              src="/logo.png"
+              alt="OG Logo"
+              className="w-10 h-10 object-contain"
             />
-           </Link>
+            <span className="text-white font-heading font-black text-xl tracking-tight group-hover:text-orange transition-colors">
+              Obech Global
+            </span>
+          </Link>
 
           {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-1">

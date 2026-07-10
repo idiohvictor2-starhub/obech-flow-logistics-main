@@ -19,7 +19,7 @@ export default function HeroSection() {
   const handleTrack = (e) => {
     e.preventDefault();
     if (trackingNumber.trim()) {
-      navigate(`/tracking?tn=${encodeURIComponent(trackingNumber.trim())}`);
+      navigate(`/track?id=${encodeURIComponent(trackingNumber.trim())}`);
     }
   };
 
@@ -64,7 +64,7 @@ export default function HeroSection() {
 
           <div className="flex flex-wrap gap-4 mt-8">
             <Link
-              to="/tracking"
+              to="/track"
               className="flex items-center gap-2 px-7 py-3.5 bg-orange text-white font-semibold text-sm uppercase tracking-wider rounded hover:bg-orange-light transition-all hover:translate-x-1"
             >
               Track Shipment <ArrowRight size={16} />

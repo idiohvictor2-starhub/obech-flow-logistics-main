@@ -1,11 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { MapPin, Phone, Mail, ArrowUpRight, Linkedin, Twitter, Facebook, Instagram } from "lucide-react";
-import logo from "../../assets/logo.png";
+import { MapPin, Phone, Mail, ArrowUpRight, Linkedin, Twitter, Facebook, Instagram, PlayCircle } from "lucide-react";
 const QUICK_LINKS = [
   { label: "Home", path: "/" },
   { label: "About Us", path: "/about" },
-  { label: "Track Shipment", path: "/tracking" },
+  { label: "Track Shipment", path: "/track" },
   { label: "Request Quote", path: "/quote" },
   { label: "Contact", path: "/contact" },
   { label: "Admin Portal", path: "/admin" },
@@ -21,10 +20,11 @@ const SERVICES = [
 ];
 
 const SOCIALS = [
-  { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-  { icon: Facebook, href: "https://facebook.com", label: "Facebook" },
-  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+  { icon: Instagram, href: "https://www.instagram.com/obechlogistics/", label: "Instagram" },
+  { icon: Facebook, href: "https://web.facebook.com/profile.php?id=61583011853675", label: "Facebook" },
+  { icon: Twitter, href: "https://x.com", label: "X" },
+  { icon: Linkedin, href: "https://www.linkedin.com", label: "LinkedIn" },
+  { icon: PlayCircle, href: "https://www.tiktok.com/@obech.logistics", label: "TikTok" },
 ];
 
 export default function Footer() {
@@ -58,9 +58,9 @@ export default function Footer() {
             <div className="flex items-center gap-3 mb-6">
               <Link to="/" className="flex items-center gap-3 group">
              <img
-             src={logo}
-             alt="OG Logo"
-             className="w-10 h-10 object-contain"
+              src="/logo.png"
+              alt="OG Logo"
+              className="w-10 h-10 object-contain"
              />
               </Link>
               <div>
@@ -132,9 +132,17 @@ export default function Footer() {
             </h4>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
-                <MapPin size={16} className="text-orange mt-0.5 shrink-0" />
-                <span className="text-sm text-white/50">21 road opposite I close, Festac town, Lagos and 2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261. Beside Greenews Hotel.
-                Our new drop off location </span>
+                <MapPin size={16} className="text-orange mt-1 shrink-0" />
+                <div className="flex flex-col gap-3 text-sm text-white/50">
+                  <a href="https://maps.google.com/?q=21+road+opposite+I+close,+Festac+town,+Lagos" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    <strong className="text-white">Main Office:</strong><br />
+                    21 road opposite I close, Festac town, Lagos
+                  </a>
+                  <a href="https://maps.google.com/?q=2+Kunle+Akinosi+St,+Orile+Oshodi+102214,+Lagos+100261" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
+                    <strong className="text-white">Drop-off Location:</strong><br />
+                    2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261 (Beside Greenews Hotel)
+                  </a>
+                </div>
               </li>
               <li className="flex items-start gap-3">
                 <Phone size={16} className="text-orange mt-0.5 shrink-0" />
@@ -144,9 +152,14 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-3">
                 <Mail size={16} className="text-orange mt-0.5 shrink-0" />
-                <a href="mailto:info@obechgloballogistics.com" className="text-sm text-white/50 hover:text-white transition-colors break-all">
-                  info@obechgloballogistics.com
-                </a>
+                <div className="flex flex-col text-sm text-white/50 break-all">
+                  <a href="mailto:info@obechlogistics.com" className="hover:text-white transition-colors">
+                    info@obechlogistics.com
+                  </a>
+                  <a href="mailto:obechlogistics@gmail.com" className="hover:text-white transition-colors mt-1">
+                    obechlogistics@gmail.com
+                  </a>
+                </div>
               </li>
             </ul>
           </div>

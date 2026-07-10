@@ -54,7 +54,7 @@ export default function AdminLogin() {
     } else if (data.session) {
       toast({
         title: "Access Granted",
-        description: "Welcome back to the Obech Flow Admin Portal.",
+        description: "Welcome back to the Obech Logistic Admin Portal.",
       });
       navigate("/admin", { replace: true });
     }
@@ -78,7 +78,7 @@ export default function AdminLogin() {
               <KeyRound size={28} />
             </div>
             <h1 className="text-2xl lg:text-3xl font-heading font-black text-white tracking-tight">
-              Obech Flow Admin
+              Obech Logistic Admin
             </h1>
             <p className="text-sm text-white/50 mt-2">
               Secure portal for booking, tracking and dispatch control
