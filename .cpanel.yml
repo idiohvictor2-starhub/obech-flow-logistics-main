@@ -1,0 +1,20 @@
+# cPanel Git Deployment Configuration
+# Ref: https://docs.cpanel.net/cpanel/files/git-version-control/
+---
+deployment:
+  tasks:
+    # 1. Define the deployment path (Replace 'your_cpanel_username' with your actual cPanel username)
+    - export DEPLOYPATH=/home/yobecohqb/public_html/
+
+    # --- OPTION A (RECOMMENDED FOR VITE REACT SPAs) ---
+    # Deploy only the compiled static assets from the 'dist' directory.
+    # Note: For this option, you must run 'npm run build' locally before pushing,
+    # or have cPanel run the build command if Node is installed.
+    # To use this, uncomment the line below:
+    # - /bin/rsync -avz --delete dist/ $DEPLOYPATH
+
+    # --- OPTION B (DEPLOY ALL REPO CONTENTS) ---
+    # Deploy the entire repository contents (excluding local config and node_modules).
+    # Note: Serving raw source files directly to public_html will not run the app
+    # unless you compile them or run a Node server.
+    - /bin/rsync -avz --exclude '.git' --exclude 'node_modules' --exclude '.env' --exclude '.env.local' * $DEPLOYPATH
