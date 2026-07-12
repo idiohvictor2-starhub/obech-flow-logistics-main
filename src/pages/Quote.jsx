@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Send, CheckCircle2, Loader2, Bike, Truck, Package } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const PICKUP_OPTIONS = [
   {
@@ -54,6 +55,7 @@ export default function Quote() {
   const [form, setForm] = useState(INITIAL);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [trackingId, setTrackingId] = useState("");
   const { toast } = useToast();
 
   const set = (field) => (e) =>
@@ -65,6 +67,7 @@ export default function Quote() {
     if (
       !form.name ||
       !form.phone ||
+      !form.email ||
       !form.pickup_address ||
       !form.delivery_address ||
       !form.goods_type ||
@@ -73,6 +76,7 @@ export default function Quote() {
     ) {
       toast({
         title: "Please complete the required booking details.",
+        description: "Your name, phone, email, addresses, goods type, size, and vehicle choice are required.",
         variant: "destructive",
       });
       return;
@@ -80,13 +84,37 @@ export default function Quote() {
 
     setLoading(true);
 
+    const year = new Date().getFullYear();
+    const rand = Math.floor(100000 + Math.random() * 900000);
+    const generatedId = `OBL-${year}-${rand}`;
+
     try {
-      console.log("Booking request:", form);
+      const { error } = await supabase
+        .from("shipments")
+        .insert({
+          tracking_id: generatedId,
+          client_name: form.name,
+          client_email: form.email,
+          client_phone: form.phone,
+          sender_address: form.pickup_city ? `${form.pickup_address} (${form.pickup_city})` : form.pickup_address,
+          receiver_name: form.company_name || "Recipient",
+          receiver_address: form.delivery_city ? `${form.delivery_address} (${form.delivery_city})` : form.delivery_address,
+          package_type: form.goods_type,
+          weight_kg: parseFloat(form.estimated_weight) || null,
+          delivery_type: form.pickup_vehicle,
+          status: "pending",
+        });
+
+      if (error) throw error;
+
+      setTrackingId(generatedId);
       setSubmitted(true);
       setForm(INITIAL);
     } catch (err) {
+      console.error("Booking submission error:", err);
       toast({
-        title: "Something went wrong. Please try again.",
+        title: "Booking submission failed.",
+        description: err.message || "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -119,7 +147,14 @@ export default function Quote() {
               Booking Request Submitted
             </h2>
 
-            <p className="text-muted-foreground mt-3 leading-relaxed">
+            {trackingId && (
+              <div className="mt-5 p-4 bg-navy text-white rounded-xl border border-steel max-w-sm mx-auto shadow-sm">
+                <span className="text-xs text-white/50 uppercase tracking-widest block mb-1">Your Tracking ID</span>
+                <span className="font-mono text-xl font-bold tracking-wider">{trackingId}</span>
+              </div>
+            )}
+
+            <p className="text-muted-foreground mt-6 leading-relaxed">
               Thank you. Our logistics team will review your pickup details and
               contact you shortly to confirm the best vehicle, pricing, and pickup
               schedule.

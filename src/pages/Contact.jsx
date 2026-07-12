@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Send, MapPin, Phone, Mail, CheckCircle2, Loader2, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 const INITIAL = { name: "", email: "", phone: "", message: "" };
 
@@ -21,31 +22,49 @@ export default function Contact() {
     }
     setLoading(true);
     try {
-  const messages = JSON.parse(
-    localStorage.getItem("obech_contact_messages") || "[]"
-  );
+      // 1. Save to local storage for persistence
+      const messages = JSON.parse(
+        localStorage.getItem("obech_contact_messages") || "[]"
+      );
 
-  messages.push({
-    id: Date.now(),
-    ...form,
-    created_at: new Date().toISOString(),
-  });
+      messages.push({
+        id: Date.now(),
+        ...form,
+        created_at: new Date().toISOString(),
+      });
 
-  localStorage.setItem(
-    "obech_contact_messages",
-    JSON.stringify(messages)
-  );
+      localStorage.setItem(
+        "obech_contact_messages",
+        JSON.stringify(messages)
+      );
 
-  setSubmitted(true);
-  setForm(INITIAL);
-} catch (err) {
-  toast({
-    title: "Unable to save your message.",
-    variant: "destructive",
-  });
-} finally {
-  setLoading(false);
-}
+      // 2. Invoke Supabase Edge Function to notify optiflowafrica@gmail.com
+      const { error: emailError } = await supabase.functions.invoke("send-email", {
+        body: {
+          type: "INQUIRY",
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          message: form.message,
+        },
+      });
+
+      if (emailError) {
+        console.error("Failed to send notification email:", emailError);
+      }
+
+      setSubmitted(true);
+      setForm(INITIAL);
+    } catch (err) {
+      console.error("Inquiry submission error:", err);
+      toast({
+        title: "Unable to submit your message.",
+        description: err.message || "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

@@ -136,6 +136,7 @@ CREATE POLICY "Public can view active pricing" ON public.pricing_rules FOR SELEC
 -- Shipments Policies
 CREATE POLICY "Admins can manage shipments" ON public.shipments FOR ALL TO authenticated USING (true);
 CREATE POLICY "Public can view shipment by tracking_id" ON public.shipments FOR SELECT TO anon USING (true); 
+CREATE POLICY "Public can insert shipments" ON public.shipments FOR INSERT TO anon WITH CHECK (true);
 -- Public cannot see status_note directly (we should ideally hide it via a view or handle it in the app by not displaying it, 
 -- but since RLS operates at the row level, we just allow the row for SELECT, and the frontend will filter status_note).
 
