@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, MoreVertical, MapPin, Truck, Calendar, Clock, Download, X } from "lucide-react";
+import { Search, Filter, Truck, Download, Plus, Printer } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import AdminOfficeBookingDialog from "@/components/admin/AdminOfficeBookingDialog";
+import { formatNaira, printBookingReceipt } from "@/utils/printBookingReceipt";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 
 const STATUSES = [
@@ -25,6 +26,7 @@ export default function AdminBookings() {
   const { toast } = useToast();
   const [shipments, setShipments] = useState([]);
   const [drivers, setDrivers] = useState([]);
+  const [routes, setRoutes] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [search, setSearch] = useState("");
@@ -32,6 +34,7 @@ export default function AdminBookings() {
   
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   const [updateForm, setUpdateForm] = useState({
     status: "",
@@ -66,6 +69,15 @@ export default function AdminBookings() {
       .eq("is_active", true);
       
     if (driversData) setDrivers(driversData);
+
+    // Fetch active routes for office bookings
+    const { data: routesData } = await supabase
+      .from("routes")
+      .select("id, route_name, origin, destination")
+      .eq("is_active", true)
+      .order("route_name");
+
+    if (routesData) setRoutes(routesData);
     
     setLoading(false);
   };
@@ -78,6 +90,16 @@ export default function AdminBookings() {
       driver_id: shipment.driver_id || ""
     });
     setIsSheetOpen(true);
+  };
+
+  const handlePrintReceipt = (shipment) => {
+    if (!printBookingReceipt(shipment)) {
+      toast({
+        title: "Print window blocked",
+        description: "Allow pop-ups for this site, then select Receipt again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleUpdate = async (e) => {
@@ -179,12 +201,22 @@ export default function AdminBookings() {
           <h1 className="text-2xl font-heading font-black text-navy">Master Shipments</h1>
           <p className="text-muted-foreground mt-1">Manage all logistics bookings, assign drivers, and update statuses.</p>
         </div>
-        <button 
-          onClick={exportCSV}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-steel rounded-lg text-sm font-semibold hover:bg-slate-50 transition"
-        >
-          <Download size={16} /> Export CSV
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-orange text-white rounded-lg text-sm font-bold hover:bg-orange-light transition"
+          >
+            <Plus size={16} /> New Office Booking
+          </button>
+          <button
+            type="button"
+            onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-steel rounded-lg text-sm font-semibold hover:bg-slate-50 transition"
+          >
+            <Download size={16} /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -264,7 +296,16 @@ export default function AdminBookings() {
                     <td className="px-6 py-4 text-muted-foreground whitespace-nowrap">
                       {format(new Date(shipment.created_at), "MMM dd, yyyy")}
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      {shipment.receipt_number && (
+                        <button
+                          type="button"
+                          onClick={() => handlePrintReceipt(shipment)}
+                          className="text-navy hover:text-orange font-semibold text-sm mr-4"
+                        >
+                          Receipt
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleOpenSheet(shipment)}
                         className="text-orange hover:text-orange-light font-semibold text-sm"
@@ -305,6 +346,7 @@ export default function AdminBookings() {
                     <p className="text-xs text-muted-foreground uppercase font-semibold">Client</p>
                     <p className="font-bold text-navy mt-1">{selectedShipment.client_name}</p>
                     <p className="text-muted-foreground">{selectedShipment.client_email}</p>
+                    <p className="text-muted-foreground">{selectedShipment.client_phone}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground uppercase font-semibold">Package Type</p>
@@ -320,6 +362,36 @@ export default function AdminBookings() {
                     </div>
                   </div>
                 </div>
+
+                {selectedShipment.receipt_number && (
+                  <div className="bg-white rounded-xl border border-steel p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase font-semibold">Office Receipt</p>
+                        <p className="font-mono font-bold text-navy mt-1">{selectedShipment.receipt_number}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {formatNaira(selectedShipment.amount_paid)} paid · {formatNaira(Math.max(Number(selectedShipment.total_amount) - Number(selectedShipment.amount_paid), 0))} balance
+                        </p>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${
+                        selectedShipment.payment_status === "paid"
+                          ? "bg-green-100 text-green-700"
+                          : selectedShipment.payment_status === "partial"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-red-100 text-red-700"
+                      }`}>
+                        {selectedShipment.payment_status}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePrintReceipt(selectedShipment)}
+                      className="mt-4 w-full py-2.5 border border-navy text-navy rounded-lg font-bold hover:bg-navy hover:text-white transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Printer size={16} /> Print Receipt
+                    </button>
+                  </div>
+                )}
 
                 {/* Update Form */}
                 <div>
@@ -381,6 +453,14 @@ export default function AdminBookings() {
           )}
         </SheetContent>
       </Sheet>
+
+      <AdminOfficeBookingDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        routes={routes}
+        drivers={drivers}
+        onCreated={fetchData}
+      />
     </div>
   );
 }
