@@ -20,7 +20,6 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminBookings from "@/pages/admin/AdminBookings";
 import AdminTracking from "@/pages/admin/AdminTracking";
 import AdminPhotos from "@/pages/admin/AdminPhotos";
-import AdminCustomers from "@/pages/admin/AdminCustomers";
 import AdminDrivers from "@/pages/admin/AdminDrivers";
 import AdminVehicles from "@/pages/admin/AdminVehicles";
 import AdminReports from "@/pages/admin/AdminReports";
@@ -52,7 +51,6 @@ function App() {
             <Route path="/admin/bookings" element={<AdminBookings />} />
             <Route path="/admin/tracking" element={<AdminTracking />} />
             <Route path="/admin/photos" element={<AdminPhotos />} />
-            <Route path="/admin/customers" element={<AdminCustomers />} />
             <Route path="/admin/drivers" element={<AdminDrivers />} />
             <Route path="/admin/vehicles" element={<AdminVehicles />} />
             <Route path="/admin/reports" element={<AdminReports />} />

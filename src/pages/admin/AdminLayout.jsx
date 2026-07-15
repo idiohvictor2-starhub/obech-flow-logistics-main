@@ -25,7 +25,6 @@ const ADMIN_LINKS = [
   { label: "Bookings", path: "/admin/bookings", icon: ClipboardList },
   { label: "Tracking Control", path: "/admin/tracking", icon: MapPin },
   { label: "Manage Photos", path: "/admin/photos", icon: Image },
-  { label: "Customers", path: "/admin/customers", icon: Users },
   { label: "Drivers & Riders", path: "/admin/drivers", icon: ShieldCheck },
   { label: "Vehicles/Fleet", path: "/admin/vehicles", icon: Truck },
   { label: "Locations/Hubs", path: "/admin/locations", icon: Globe },
