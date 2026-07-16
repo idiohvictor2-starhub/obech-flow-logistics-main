@@ -14,6 +14,7 @@ import {
   Search,
   Truck,
   UserRound,
+  Trash2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
@@ -128,6 +129,34 @@ export default function AdminTracking() {
     setLoading(false);
     setRefreshing(false);
   }, [toast]);
+
+  const handleClearTrackingHistory = async () => {
+    if (!window.confirm("Are you sure you want to permanently clear all shipment tracking history? This will delete all history entries but keep your shipments.")) {
+      return;
+    }
+    try {
+      setRefreshing(true);
+      const { error } = await supabase
+        .from("status_history")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (error) throw error;
+      toast({
+        title: "Tracking History Cleared",
+        description: "All shipment tracking logs have been deleted successfully.",
+      });
+      await fetchData({ silent: true });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     fetchData();
@@ -298,15 +327,25 @@ export default function AdminTracking() {
             Monitor shipment movement, update delivery progress, and share customer tracking links.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => fetchData({ silent: true })}
-          disabled={refreshing}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-steel rounded-lg text-sm font-bold text-navy hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-          Refresh
-        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleClearTrackingHistory}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 rounded-lg text-sm font-bold text-white hover:bg-red-700 transition"
+          >
+            <Trash2 size={16} />
+            Clear History
+          </button>
+          <button
+            type="button"
+            onClick={() => fetchData({ silent: true })}
+            disabled={refreshing}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-steel rounded-lg text-sm font-bold text-navy hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mt-8">

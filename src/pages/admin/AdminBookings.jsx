@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Truck, Download, Plus, Printer } from "lucide-react";
+import { Search, Filter, Truck, Download, Plus, Printer, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
@@ -46,6 +46,34 @@ export default function AdminBookings() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleClearBookings = async () => {
+    if (!window.confirm("Are you sure you want to permanently delete all bookings? This action is irreversible.")) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from("shipments")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000");
+
+      if (error) throw error;
+      toast({
+        title: "Bookings Cleared",
+        description: "All booking records have been deleted successfully.",
+      });
+      fetchData();
+    } catch (err) {
+      toast({
+        title: "Error clearing bookings",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -215,6 +243,13 @@ export default function AdminBookings() {
             className="flex items-center gap-2 px-4 py-2 bg-white border border-steel rounded-lg text-sm font-semibold hover:bg-slate-50 transition"
           >
             <Download size={16} /> Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleClearBookings}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition"
+          >
+            <Trash2 size={16} /> Clear Bookings
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Truck, Search, Settings, AlertTriangle, CheckCircle, HelpCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Truck, Search, Settings, AlertTriangle, CheckCircle, HelpCircle, Plus, Trash2, X } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 const INITIAL_VEHICLES = [
   { id: "VEH-001", model: "Toyota HiAce (Van)", plate: "GHA-8821-22", driver: "Chinedu Obi", status: "Active", fuel: "75%", maintenance: "2026-08-15" },
@@ -10,8 +11,77 @@ const INITIAL_VEHICLES = [
 ];
 
 export default function AdminVehicles() {
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [vehicles] = useState(INITIAL_VEHICLES);
+  const [vehicles, setVehicles] = useState(() => {
+    const stored = localStorage.getItem("obech_vehicles");
+    return stored ? JSON.parse(stored) : INITIAL_VEHICLES;
+  });
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({
+    model: "",
+    plate: "",
+    driver: "",
+    status: "Active",
+    fuel: "100%",
+    maintenance: new Date().toISOString().split("T")[0]
+  });
+
+  const handleClearFleet = () => {
+    if (!window.confirm("Are you sure you want to permanently clear all vehicles in the fleet? This action is irreversible.")) {
+      return;
+    }
+    setVehicles([]);
+    localStorage.setItem("obech_vehicles", JSON.stringify([]));
+    toast({
+      title: "Fleet Inventory Cleared",
+      description: "All vehicles have been removed from the database.",
+    });
+  };
+
+  const handleAddVehicle = (e) => {
+    e.preventDefault();
+    if (!newVehicle.model || !newVehicle.plate || !newVehicle.driver) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const randNum = Math.floor(100 + Math.random() * 900);
+    const vehicleId = `VEH-${randNum}`;
+
+    const formattedFuel = newVehicle.fuel.endsWith("%") ? newVehicle.fuel : `${newVehicle.fuel}%`;
+    const item = {
+      id: vehicleId,
+      model: newVehicle.model,
+      plate: newVehicle.plate,
+      driver: newVehicle.driver,
+      status: newVehicle.status,
+      fuel: formattedFuel,
+      maintenance: newVehicle.maintenance
+    };
+
+    const updated = [item, ...vehicles];
+    setVehicles(updated);
+    localStorage.setItem("obech_vehicles", JSON.stringify(updated));
+    setIsAddOpen(false);
+    setNewVehicle({
+      model: "",
+      plate: "",
+      driver: "",
+      status: "Active",
+      fuel: "100%",
+      maintenance: new Date().toISOString().split("T")[0]
+    });
+    toast({
+      title: "Vehicle Added",
+      description: `${item.model} has been added to the fleet.`,
+    });
+  };
 
   const filtered = vehicles.filter(
     (v) =>
@@ -22,11 +92,29 @@ export default function AdminVehicles() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-heading font-black text-navy">Fleet Inventory</h1>
-        <p className="text-muted-foreground mt-1">
-          Manage logistics fleet status, plate registrations, and maintenance schedules.
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-heading font-black text-navy">Fleet Inventory</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage logistics fleet status, plate registrations, and maintenance schedules.
+          </p>
+        </div>
+        <div className="flex gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-orange text-white rounded-lg text-sm font-bold hover:bg-orange-light transition shadow-sm"
+          >
+            <Plus size={16} /> Add Vehicle
+          </button>
+          <button
+            type="button"
+            onClick={handleClearFleet}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition shadow-sm"
+          >
+            <Trash2 size={16} /> Clear Fleet
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -139,6 +227,103 @@ export default function AdminVehicles() {
           </table>
         </div>
       </div>
+
+      {/* Modal overlay */}
+      {isAddOpen && (
+        <div className="fixed inset-0 bg-navy/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-steel max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="bg-navy p-6 flex justify-between items-center text-white">
+              <h3 className="font-heading font-bold text-lg">Add New Vehicle</h3>
+              <button onClick={() => setIsAddOpen(false)} className="hover:text-orange transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleAddVehicle} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Vehicle Model *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Toyota HiAce (Van)"
+                  value={newVehicle.model}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
+                  className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Plate Registration *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. GHA-8821-22"
+                  value={newVehicle.plate}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, plate: e.target.value })}
+                  className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Assigned Driver *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Chinedu Obi"
+                  value={newVehicle.driver}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, driver: e.target.value })}
+                  className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Fuel Level (%)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 75%"
+                    value={newVehicle.fuel}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, fuel: e.target.value })}
+                    className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Next Service Date</label>
+                  <input
+                    type="date"
+                    value={newVehicle.maintenance}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, maintenance: e.target.value })}
+                    className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Operational Status</label>
+                <select
+                  value={newVehicle.status}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, status: e.target.value })}
+                  className="w-full border border-steel rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy bg-white"
+                >
+                  <option value="Active">Active</option>
+                  <option value="In Transit">In Transit</option>
+                  <option value="Maintenance">Maintenance</option>
+                </select>
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  className="flex-1 px-4 py-2.5 bg-steel text-navy rounded-lg font-bold hover:bg-steel-dark transition text-sm text-center"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2.5 bg-orange text-white rounded-lg font-bold hover:bg-orange-light transition text-sm text-center"
+                >
+                  Add Vehicle
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
