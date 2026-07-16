@@ -7,7 +7,7 @@ const GMAIL_REFRESH_TOKEN = Deno.env.get("GMAIL_REFRESH_TOKEN") || "";
 const SENDER_EMAIL = Deno.env.get("SENDER_EMAIL") || "noreply@obechlogistics.com";
 const SUPPORT_EMAIL = Deno.env.get("SUPPORT_EMAIL") || "support@obechlogistics.com";
 const COMPANY_NAME = "Obech Flow Logistics";
-const ADMIN_NOTIFICATION_EMAIL = "optiflowafrica@gmail.com";
+const ADMIN_NOTIFICATION_EMAILS = ["optiflowafrica@gmail.com", "obechlogistics@gmail.com"];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,7 +58,7 @@ serve(async (req) => {
       await connectSmtp();
       await client.send({
         from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-        to: ADMIN_NOTIFICATION_EMAIL,
+        to: ADMIN_NOTIFICATION_EMAILS.join(", "),
         replyTo: email,
         subject: subject,
         content: "auto-generated",
@@ -118,7 +118,7 @@ serve(async (req) => {
       await connectSmtp();
       await client.send({
         from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-        to: ADMIN_NOTIFICATION_EMAIL,
+        to: ADMIN_NOTIFICATION_EMAILS.join(", "),
         replyTo: record.client_email,
         subject: adminSubject,
         content: "auto-generated",
