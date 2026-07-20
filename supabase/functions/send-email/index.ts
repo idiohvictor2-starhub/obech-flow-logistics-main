@@ -1,240 +1,311 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { SmtpClient } from "https://deno.land/x/smtp/mod.ts";
+// Obech Flow Logistics transactional email Edge Function.
+import nodemailer from "npm:nodemailer@^6.9.14";
 
-const GMAIL_CLIENT_ID = Deno.env.get("GMAIL_CLIENT_ID") || "";
-const GMAIL_CLIENT_SECRET = Deno.env.get("GMAIL_CLIENT_SECRET") || "";
-const GMAIL_REFRESH_TOKEN = Deno.env.get("GMAIL_REFRESH_TOKEN") || "";
-const SENDER_EMAIL = Deno.env.get("SENDER_EMAIL") || "noreply@obechlogistics.com";
-const SUPPORT_EMAIL = Deno.env.get("SUPPORT_EMAIL") || "support@obechlogistics.com";
-const COMPANY_NAME = "Obech Flow Logistics";
-const ADMIN_NOTIFICATION_EMAILS = ["optiflowafrica@gmail.com", "obechlogistics@gmail.com"];
+const SMTP_APP_PASSWORD =
+  Deno.env.get("SMTP_APP_PASSWORD") ||
+  Deno.env.get("GMAIL_APP_PASSWORD") ||
+  Deno.env.get("GMAIL_CLIENT_SECRET") ||
+  "";
+
+const SENDER_EMAIL =
+  Deno.env.get("SENDER_EMAIL") || "obechlogistics@gmail.com";
+const SUPPORT_EMAIL =
+  Deno.env.get("SUPPORT_EMAIL") || "info@obechlogistics.com";
+const INQUIRY_EMAIL =
+  Deno.env.get("INQUIRY_EMAIL") || "info@obechlogistics.com";
+
+const COMPANY_NAME = "Obech Global Logistics";
+const ADMIN_NOTIFICATION_EMAILS = [
+  "obechlogistics@gmail.com",
+  "optiflowafrica@gmail.com",
+];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
-  // Handle CORS options request
+const jsonResponse = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+
+const escapeHtml = (value: unknown) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const isEmail = (value: unknown) =>
+  typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const uniqueEmails = (emails: string[]) =>
+  [...new Set(emails.map((email) => email.trim()).filter(Boolean))];
+
+const page = (content: string) => `
+  <div style="font-family:Arial,sans-serif;color:#0f172a;max-width:600px;margin:0 auto;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden">
+    <div style="background:#0f172a;padding:20px;text-align:center">
+      <h1 style="color:#fff;margin:0;font-size:24px">${COMPANY_NAME}</h1>
+    </div>
+    <div style="padding:30px">${content}</div>
+    <div style="background:#f8fafc;padding:15px;text-align:center;font-size:12px;color:#64748b">
+      Questions? Reply to this email or contact ${escapeHtml(SUPPORT_EMAIL)}.
+    </div>
+  </div>
+`;
+
+const getTransporter = () => {
+  if (!isEmail(SENDER_EMAIL) || !SMTP_APP_PASSWORD) {
+    throw new Error("Email sender configuration is incomplete. Check SENDER_EMAIL and SMTP_APP_PASSWORD / GMAIL_APP_PASSWORD in Supabase Secrets.");
+  }
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: SENDER_EMAIL,
+      pass: SMTP_APP_PASSWORD,
+    },
+  });
+};
+
+const sendEmail = async ({
+  to,
+  replyTo,
+  subject,
+  text,
+  html,
+}: {
+  to: string | string[];
+  replyTo?: string;
+  subject: string;
+  text: string;
+  html: string;
+}) => {
+  const transporter = getTransporter();
+  return await transporter.sendMail({
+    from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
+    to,
+    replyTo,
+    subject,
+    text,
+    html,
+  });
+};
+
+const trackingButton = (trackingId: unknown) => {
+  const safeId = escapeHtml(trackingId);
+  const url = `https://obechlogistics.com/track?id=${encodeURIComponent(
+    String(trackingId ?? ""),
+  )}`;
+
+  return `
+    <p style="margin-top:24px">
+      <a href="${url}" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;padding:10px 20px;border-radius:4px;font-weight:bold">
+        Track ${safeId}
+      </a>
+    </p>
+  `;
+};
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (req.method !== "POST") {
+    return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
   try {
     const payload = await req.json();
 
-    const client = new SmtpClient();
-    const connectSmtp = async () => {
-      await client.connectTLS({
-        hostname: "smtp.gmail.com",
-        port: 465,
-        username: SENDER_EMAIL,
-        password: GMAIL_CLIENT_SECRET, // App Password
+    // --- CASE 1: Contact Form Inquiry ---
+    if (payload?.type === "INQUIRY") {
+      const name = String(payload.name || "").trim();
+      const email = String(payload.email || "").trim();
+      const phone = String(payload.phone || "").trim();
+      const message = String(payload.message || "").trim();
+
+      if (!name || !isEmail(email) || !message) {
+        return jsonResponse(
+          { error: "Name, a valid email, and message are required" },
+          400,
+        );
+      }
+
+      const recipients = uniqueEmails([
+        INQUIRY_EMAIL,
+        ...ADMIN_NOTIFICATION_EMAILS,
+      ]);
+      const subject = `New Inquiry from ${name} | Obech Flow`;
+      const html = page(`
+        <h2 style="margin-top:0">New Customer Inquiry</h2>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(phone || "N/A")}</p>
+        <p><strong>Message:</strong></p>
+        <p style="white-space:pre-wrap;background:#f8fafc;padding:15px;border-radius:4px;border:1px solid #e2e8f0">${escapeHtml(
+          message,
+        )}</p>
+      `);
+
+      await sendEmail({
+        to: recipients,
+        replyTo: email,
+        subject,
+        text: `New inquiry from ${name} (${email}, ${phone || "no phone"}):\n\n${message}`,
+        html,
       });
+
+      return jsonResponse({ message: "Inquiry email sent successfully" });
+    }
+
+    // --- CASE 2: Quote Requests or New Orders (INSERT / QUOTE) ---
+    const record = payload?.record || payload;
+    const oldRecord = payload?.old_record;
+
+    if (!record || typeof record !== "object") {
+      return jsonResponse({ error: "A payload record or quotation details are required" }, 400);
+    }
+
+    if (
+      payload.type === "UPDATE" &&
+      oldRecord?.status === record.status
+    ) {
+      return jsonResponse({ message: "Status unchanged" });
+    }
+
+    const trackingId = String(record.tracking_id || record.id || "").trim();
+    const clientName = String(record.client_name || record.fullName || "Valued Customer").trim();
+    const clientEmail = String(record.client_email || record.email || "").trim();
+    const clientPhone = String(record.client_phone || record.phone || "N/A").trim();
+    const origin = String(record.sender_address || record.originCountry || "N/A").trim();
+    const destination = String(record.receiver_address || record.destinationCountry || "N/A").trim();
+    const serviceType = String(record.service_type || record.freightType || "Air Freight").trim();
+    const weight = String(record.weight_kg || record.weight || record.estimatedWeight || "N/A").trim();
+    const notes = String(record.special_instructions || record.additionalMessage || "None").trim();
+
+    // Check for NEW QUOTE or INSERT
+    if (payload.type === "QUOTE" || payload.type === "INSERT") {
+      const adminSubject = `New Quote/Booking Request Received | ${trackingId || "Obech"}`;
+      const adminHtml = page(`
+        <h2 style="margin-top:0">New Quote / Order Booking</h2>
+        <p>A new shipping quotation has been requested on the website.</p>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:7px 0;font-weight:bold">Tracking ID:</td><td>${escapeHtml(trackingId)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Client Name:</td><td>${escapeHtml(clientName)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Client Email:</td><td>${escapeHtml(clientEmail)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Client Phone:</td><td>${escapeHtml(clientPhone)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Service Type:</td><td>${escapeHtml(serviceType)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Origin:</td><td>${escapeHtml(origin)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Destination:</td><td>${escapeHtml(destination)}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Est. Weight:</td><td>${escapeHtml(weight !== "N/A" ? `${weight} kg` : "N/A")}</td></tr>
+          <tr><td style="padding:7px 0;font-weight:bold">Notes / Specs:</td><td>${escapeHtml(notes)}</td></tr>
+        </table>
+        <p style="margin-top:24px"><a href="https://obechlogistics.com/admin/bookings" style="display:inline-block;background:#f97316;color:#fff;text-decoration:none;padding:10px 20px;border-radius:4px;font-weight:bold">Open Admin Dashboard</a></p>
+      `);
+
+      await sendEmail({
+        to: ADMIN_NOTIFICATION_EMAILS,
+        replyTo: isEmail(clientEmail) ? clientEmail : SUPPORT_EMAIL,
+        subject: adminSubject,
+        text: `New quote request ${trackingId} from ${clientName} (${clientEmail}, ${clientPhone}). Origin: ${origin}, Destination: ${destination}.`,
+        html: adminHtml,
+      });
+
+      // Send Customer Confirmation if email provided
+      if (isEmail(clientEmail)) {
+        const customerSubject = `Your Quote Request Received | ${trackingId || "Obech"}`;
+        const customerHtml = page(`
+          <p>Hi ${escapeHtml(clientName)},</p>
+          <p>Thank you for requesting a freight quote with ${COMPANY_NAME}. We received your inquiry for <strong>${escapeHtml(serviceType)}</strong> shipment (${escapeHtml(origin)} → ${escapeHtml(destination)}).</p>
+          <p>Your reference tracking ID is <strong>${escapeHtml(trackingId)}</strong>.</p>
+          <p>Our international logistics operations team is reviewing your specs and will email you a custom shipping rate quote shortly.</p>
+          ${trackingButton(trackingId)}
+        `);
+
+        await sendEmail({
+          to: clientEmail,
+          replyTo: SUPPORT_EMAIL,
+          subject: customerSubject,
+          text: `Hi ${clientName}, we received your quote request for tracking ID ${trackingId}. Our team will contact you shortly.`,
+          html: customerHtml,
+        });
+      }
+
+      return jsonResponse({
+        message: "Quote/Booking notification emails sent successfully",
+      });
+    }
+
+    if (payload.type !== "UPDATE") {
+      return jsonResponse({ message: `No email required for ${payload.type}` });
+    }
+
+    if (!isEmail(clientEmail)) {
+      return jsonResponse(
+        { error: "Status update requires a valid client email" },
+        400,
+      );
+    }
+
+    const messages: Record<string, { subject: string; message: string }> = {
+      confirmed: {
+        subject: `Your booking is confirmed | ${trackingId}`,
+        message: `Your shipment with tracking ID ${trackingId} has been confirmed.`,
+      },
+      picked_up: {
+        subject: `Your package has been picked up | ${trackingId}`,
+        message: `Your package with tracking ID ${trackingId} has been picked up.`,
+      },
+      in_transit: {
+        subject: `Your shipment is on its way | ${trackingId}`,
+        message: `Your shipment with tracking ID ${trackingId} is currently in transit.`,
+      },
+      out_for_delivery: {
+        subject: `Out for delivery | ${trackingId}`,
+        message: `Your shipment with tracking ID ${trackingId} is out for delivery.`,
+      },
+      delivered: {
+        subject: `Delivered successfully | ${trackingId}`,
+        message: `Your shipment with tracking ID ${trackingId} has been delivered successfully. Thank you for choosing ${COMPANY_NAME}.`,
+      },
+      failed: {
+        subject: `Delivery attempt unsuccessful | ${trackingId}`,
+        message: `The delivery attempt for shipment ${trackingId} was unsuccessful. Please contact us for assistance.`,
+      },
     };
 
-    // --- CASE 1: Contact Form Inquiry (Direct Invocation) ---
-    if (payload.type === "INQUIRY") {
-      const { name, email, phone, message } = payload;
-      const subject = `New Inquiry from ${name} | Obech Flow`;
-      const htmlBody = `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-          <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Customer Inquiry</h1>
-          </div>
-          <div style="padding: 30px;">
-            <strong>Name:</strong> ${name}<br/>
-            <strong>Email:</strong> ${email}<br/>
-            <strong>Phone:</strong> ${phone || "N/A"}<br/><br/>
-            <strong>Message:</strong><br/>
-            <p style="white-space: pre-wrap; background-color: #f8fafc; padding: 15px; border-radius: 4px; border: 1px solid #e2e8f0;">${message}</p>
-          </div>
-          <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
-            This email was sent automatically from Obech Flow Contact Form.
-          </div>
-        </div>
-      `;
-
-      await connectSmtp();
-      await client.send({
-        from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-        to: ADMIN_NOTIFICATION_EMAILS.join(", "),
-        replyTo: email,
-        subject: subject,
-        content: "auto-generated",
-        html: htmlBody,
-      });
-      await client.close();
-
-      return new Response(JSON.stringify({ message: "Inquiry email sent successfully" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
+    const notification = messages[String(record.status || "").toLowerCase()];
+    if (!notification) {
+      return jsonResponse({
+        message: `No email required for status: ${record.status}`,
       });
     }
 
-    // --- CASE 2: Database Webhook Trigger or Direct Quote Invocation ---
-    const record = payload.record || payload;
+    const html = page(`
+      <p>Hi ${escapeHtml(clientName)},</p>
+      <p>${escapeHtml(notification.message)}</p>
+      ${trackingButton(trackingId)}
+    `);
 
-    // Handle QUOTE or INSERT (New Quote/Order Booking Notification)
-    if (payload.type === "QUOTE" || payload.type === "INSERT") {
-      // 1. Send Notification to Admins (optiflowafrica@gmail.com, obechlogistics@gmail.com)
-      const adminSubject = `New Freight Quote Request | ${record.tracking_id || 'Obech'}`;
-      const adminBody = `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-          <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Quote Request Received</h1>
-          </div>
-          <div style="padding: 30px;">
-            <p>A new shipping quote request has been submitted on Obech Global Logistics.</p>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-              <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Tracking ID:</td><td>${record.tracking_id || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Name:</td><td>${record.client_name || record.fullName || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Email:</td><td>${record.client_email || record.email || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Phone:</td><td>${record.client_phone || record.phone || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Freight Service:</td><td>${record.service_type || record.freightType || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Origin Country:</td><td>${record.sender_address || record.originCountry || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Destination Country:</td><td>${record.receiver_address || record.destinationCountry || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Cargo Specs:</td><td>${record.goods_description || record.cargoDescription || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Est. Weight:</td><td>${record.weight_kg || record.weight || record.estimatedWeight ? (record.weight_kg || record.weight || record.estimatedWeight) + ' kg' : 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Notes:</td><td>${record.special_instructions || record.additionalMessage || 'N/A'}</td></tr>
-            </table>
-            <br/>
-            <a href="https://obechlogistics.com/admin/bookings" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold;">Open Admin Dashboard</a>
-          </div>
-        </div>
-      `;
-            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-              <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Tracking ID:</td><td>${record.tracking_id}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Name:</td><td>${record.client_name}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Email:</td><td>${record.client_email}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Client Phone:</td><td>${record.client_phone || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Pickup Address:</td><td>${record.sender_address}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Delivery Address:</td><td>${record.receiver_address}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Package Type:</td><td>${record.package_type || 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Weight:</td><td>${record.weight_kg ? record.weight_kg + ' kg' : 'N/A'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold;">Vehicle Type:</td><td>${record.delivery_type || 'N/A'}</td></tr>
-            </table>
-            <br/>
-            <a href="https://obechlogistics.com/admin" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">Open Admin Dashboard</a>
-          </div>
-        </div>
-      `;
-
-      await connectSmtp();
-      await client.send({
-        from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-        to: ADMIN_NOTIFICATION_EMAILS.join(", "),
-        replyTo: record.client_email,
-        subject: adminSubject,
-        content: "auto-generated",
-        html: adminBody,
-      });
-
-      // 2. Send Booking Confirmation to the Customer
-      const customerSubject = `Your Booking Request Received | ${record.tracking_id}`;
-      const customerBody = `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-          <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${COMPANY_NAME}</h1>
-          </div>
-          <div style="padding: 30px;">
-            Hi ${record.client_name},<br/><br/>
-            Thank you for booking with us. We have received your request for tracking ID <strong>${record.tracking_id}</strong>.<br/>
-            Our logistics operations team is currently reviewing your shipment details and will contact you shortly to confirm the pricing, scheduling, and driver assignment.<br/><br/>
-            <a href="https://obechlogistics.com/track?id=${record.tracking_id}" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">Track Shipment</a>
-          </div>
-          <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
-            If you have any questions, please reply to this email or contact ${SUPPORT_EMAIL}.
-          </div>
-        </div>
-      `;
-
-      await client.send({
-        from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-        to: record.client_email,
-        replyTo: SUPPORT_EMAIL,
-        subject: customerSubject,
-        content: "auto-generated",
-        html: customerBody,
-      });
-
-      await client.close();
-
-      return new Response(JSON.stringify({ message: "Order notification emails sent successfully" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    // 2b. Handle UPDATE (Status Changes notifications to customer)
-    switch (status) {
-      case "confirmed":
-        subject = `Your booking is confirmed | ${record.tracking_id}`;
-        body = `Hi ${record.client_name},<br/><br/>Your shipment with tracking ID <strong>${record.tracking_id}</strong> has been confirmed.`;
-        break;
-      case "picked_up":
-        subject = "Your package has been picked up";
-        body = `Hi ${record.client_name},<br/><br/>Your package (Tracking: <strong>${record.tracking_id}</strong>) has been picked up and is on its way to the origin facility.`;
-        break;
-      case "in_transit":
-        subject = "Your shipment is on its way";
-        body = `Hi ${record.client_name},<br/><br/>Your shipment (Tracking: <strong>${record.tracking_id}</strong>) is currently in transit.`;
-        break;
-      case "out_for_delivery":
-        subject = "Out for delivery today";
-        body = `Hi ${record.client_name},<br/><br/>Good news! Your shipment (Tracking: <strong>${record.tracking_id}</strong>) is out for delivery today.`;
-        break;
-      case "delivered":
-        subject = "Delivered successfully";
-        body = `Hi ${record.client_name},<br/><br/>Your shipment (Tracking: <strong>${record.tracking_id}</strong>) has been successfully delivered. Thank you for choosing ${COMPANY_NAME}!`;
-        break;
-      case "failed":
-        subject = "Delivery attempt unsuccessful";
-        body = `Hi ${record.client_name},<br/><br/>We attempted to deliver your shipment (Tracking: <strong>${record.tracking_id}</strong>) but were unsuccessful. Please contact support.`;
-        break;
-      default:
-        return new Response(JSON.stringify({ message: "No email required for status: " + status }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        });
-    }
-
-    const htmlBody = `
-      <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
-        <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-          <h1 style="color: #ffffff; margin: 0; font-size: 24px;">${COMPANY_NAME}</h1>
-        </div>
-        <div style="padding: 30px;">
-          ${body}
-          <br/><br/>
-          <a href="https://obechlogistics.com/track?id=${record.tracking_id}" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">Track Shipment</a>
-        </div>
-        <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
-          If you have any questions, please reply to this email or contact ${SUPPORT_EMAIL}.
-        </div>
-      </div>
-    `;
-
-    await connectSmtp();
-    await client.send({
-      from: `${COMPANY_NAME} <${SENDER_EMAIL}>`,
-      to: record.client_email,
+    await sendEmail({
+      to: clientEmail,
       replyTo: SUPPORT_EMAIL,
-      subject: subject,
-      content: "auto-generated",
-      html: htmlBody,
+      subject: notification.subject,
+      text: `Hi ${clientName}, ${notification.message}`,
+      html,
     });
-    await client.close();
 
-    return new Response(JSON.stringify({ message: "Status update email sent successfully" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return jsonResponse({ message: "Status update email sent successfully" });
   } catch (error) {
-    console.error("Error sending email:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Error sending email:", message);
+    return jsonResponse({ error: message }, 500);
   }
 });
