@@ -24,40 +24,28 @@ import {
 
 const PHOTO_CONFIG = [
   {
-    key: "hero_bg",
-    title: "Hero Background Image",
-    desc: "Background image for the landing page Hero section.",
-    location: "Home page Header",
+    key: "hero_air_freight_1",
+    title: "Global Air Freight Hero Banner",
+    desc: "Primary flagship hero banner image featuring Boeing cargo aircraft on airport runway.",
+    location: "Homepage Hero Slide 1 & Air Freight Section",
+  },
+  {
+    key: "hero_cargo_loading_2",
+    title: "Fast Cargo Handling & Loading Image",
+    desc: "Hero banner image featuring air cargo pallets & tarmac loading operations.",
+    location: "Homepage Hero Slide 2",
+  },
+  {
+    key: "hero_seaport_warehouse_3",
+    title: "Ocean & Sea Freight Seaport Image",
+    desc: "Hero banner and service image featuring seaport cranes & container terminal.",
+    location: "Homepage Hero Slide 3 & Sea Freight Section",
   },
   {
     key: "why_us",
-    title: "Why Choose Us Side Image",
-    desc: "Side graphic illustrating modern cargo shipping and logistics.",
-    location: "Home page Why Choose Us section",
-  },
-  {
-    key: "service_bike",
-    title: "Bike Dispatch Image",
-    desc: "Image used for Bike Dispatch logistics services and modes.",
-    location: "Services page & Home page Modes section",
-  },
-  {
-    key: "service_van",
-    title: "Van Delivery Image",
-    desc: "Image used for medium parcel cargo van delivery.",
-    location: "Services page & Home page Modes section",
-  },
-  {
-    key: "service_truck",
-    title: "Truck Logistics Image",
-    desc: "Image used for bulk heavy-duty cargo haulage.",
-    location: "Services page & Home page Modes section",
-  },
-  {
-    key: "service_business",
-    title: "Business Support Image",
-    desc: "Image used for forklift and warehouse commercial logistics support.",
-    location: "Services page details",
+    title: "Why Choose Us Side Graphic",
+    desc: "Side graphic illustrating international freight network and global trade.",
+    location: "Homepage Why Choose Us section",
   },
 ];
 
@@ -188,7 +176,7 @@ export default function AdminPhotos() {
 
   const handleResetAll = async () => {
     const confirmed = window.confirm(
-      "Restore all six website photos to their original defaults?"
+      "Restore all website photos to their original defaults?"
     );
     if (!confirmed) return;
 
@@ -220,9 +208,9 @@ export default function AdminPhotos() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-heading font-black text-navy">Website Photos</h1>
-          <p className="mt-1 text-muted-foreground">
-            Upload from your gallery or save an image link. Changes are shared with every visitor.
+          <h1 className="text-2xl font-heading font-black text-navy">Manage Website Photos</h1>
+          <p className="mt-1 text-muted-foreground text-sm">
+            Upload custom air & sea freight imagery or save direct image links. Changes update live across the site.
           </p>
         </div>
         <button
@@ -243,7 +231,7 @@ export default function AdminPhotos() {
       <div className="bg-orange/10 border border-orange/20 rounded-xl p-4 flex gap-3 text-navy text-sm">
         <AlertCircle size={20} className="text-orange shrink-0 mt-0.5" />
         <div>
-          <span className="font-bold">Choose Photo</span> opens your device gallery and uploads the image immediately. Use JPG, PNG, WebP, or AVIF up to 5 MB. You can still paste a direct link or choose a preset.
+          <span className="font-bold">Choose Photo</span> opens your device gallery to upload custom air & sea freight media immediately (JPG, PNG, WebP, AVIF up to 5 MB).
         </div>
       </div>
 
