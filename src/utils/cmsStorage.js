@@ -199,6 +199,34 @@ export async function saveQuoteRequest(quoteData) {
       console.warn("Supabase quote insert fallback to local storage:", dbErr);
     }
 
+    // Direct invocation to send email notification to admin & customer
+    try {
+      await supabase.functions.invoke("send-email", {
+        body: {
+          type: "QUOTE",
+          record: {
+            tracking_id: trackingId,
+            client_name: quoteData.fullName,
+            client_email: quoteData.email,
+            client_phone: `${quoteData.dialCode || ""} ${quoteData.phone}`.trim(),
+            service_type: quoteData.freightType,
+            sender_address: `${quoteData.originCountry} (${quoteData.originCountryCode || ""})`,
+            receiver_address: `${quoteData.destinationCountry} (${quoteData.destinationCountryCode || ""})`,
+            goods_description: quoteData.cargoDescription,
+            weight_kg: quoteData.estimatedWeight,
+            special_instructions: [
+              quoteData.additionalMessage,
+              quoteData.dimensions ? `Dimensions: ${quoteData.dimensions}` : null,
+              quoteData.volumetricWeight ? `Volumetric Wt: ${quoteData.volumetricWeight} kg` : null,
+            ].filter(Boolean).join(" | "),
+            status: "pending",
+          },
+        },
+      });
+    } catch (emailErr) {
+      console.warn("Direct quote notification email trigger:", emailErr);
+    }
+
     return newQuote;
   } catch (err) {
     console.error("Error saving quote request:", err);

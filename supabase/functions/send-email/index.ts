@@ -72,32 +72,37 @@ serve(async (req) => {
       });
     }
 
-    // --- CASE 2: Database Webhook Trigger (Shipment Table) ---
-    const record = payload.record;
+    // --- CASE 2: Database Webhook Trigger or Direct Quote Invocation ---
+    const record = payload.record || payload;
 
-    // Ignore status updates where the status did not change
-    if (payload.type === "UPDATE" && payload.old_record.status === record.status) {
-      return new Response(JSON.stringify({ message: "Status unchanged" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
-    }
-
-    const status = record.status;
-    let subject = "";
-    let body = "";
-
-    // 2a. Handle INSERT (New Booking Notification)
-    if (payload.type === "INSERT") {
-      // 1. Send Notification to Admin (optiflowafrica@gmail.com)
-      const adminSubject = `New Booking Request Received | ${record.tracking_id}`;
+    // Handle QUOTE or INSERT (New Quote/Order Booking Notification)
+    if (payload.type === "QUOTE" || payload.type === "INSERT") {
+      // 1. Send Notification to Admins (optiflowafrica@gmail.com, obechlogistics@gmail.com)
+      const adminSubject = `New Freight Quote Request | ${record.tracking_id || 'Obech'}`;
       const adminBody = `
         <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #0f172a; padding: 20px; text-align: center;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Booking Request</h1>
+            <h1 style="color: #ffffff; margin: 0; font-size: 24px;">New Quote Request Received</h1>
           </div>
           <div style="padding: 30px;">
-            <p>A new order booking has been placed on the site.</p>
+            <p>A new shipping quote request has been submitted on Obech Global Logistics.</p>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+              <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Tracking ID:</td><td>${record.tracking_id || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Client Name:</td><td>${record.client_name || record.fullName || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Client Email:</td><td>${record.client_email || record.email || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Client Phone:</td><td>${record.client_phone || record.phone || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Freight Service:</td><td>${record.service_type || record.freightType || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Origin Country:</td><td>${record.sender_address || record.originCountry || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Destination Country:</td><td>${record.receiver_address || record.destinationCountry || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Cargo Specs:</td><td>${record.goods_description || record.cargoDescription || 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Est. Weight:</td><td>${record.weight_kg || record.weight || record.estimatedWeight ? (record.weight_kg || record.weight || record.estimatedWeight) + ' kg' : 'N/A'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold;">Notes:</td><td>${record.special_instructions || record.additionalMessage || 'N/A'}</td></tr>
+            </table>
+            <br/>
+            <a href="https://obechlogistics.com/admin/bookings" style="display: inline-block; background-color: #f97316; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: bold;">Open Admin Dashboard</a>
+          </div>
+        </div>
+      `;
             <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
               <tr><td style="padding: 8px 0; font-weight: bold; width: 150px;">Tracking ID:</td><td>${record.tracking_id}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold;">Client Name:</td><td>${record.client_name}</td></tr>
