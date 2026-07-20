@@ -16,12 +16,14 @@ import {
   User,
   ChevronRight,
   Globe,
-  CircleDollarSign
+  CircleDollarSign,
+  Sliders
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const ADMIN_LINKS = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
+  { label: "Homepage CMS", path: "/admin/homepage", icon: Sliders },
   { label: "Bookings", path: "/admin/bookings", icon: ClipboardList },
   { label: "Tracking Control", path: "/admin/tracking", icon: MapPin },
   { label: "Manage Photos", path: "/admin/photos", icon: Image },

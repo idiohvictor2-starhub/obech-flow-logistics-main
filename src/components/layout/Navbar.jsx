@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronRight } from "lucide-react";
+import { Menu, X, ChevronRight, FileText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
 const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Services", path: "/services" },
@@ -38,7 +39,7 @@ export default function Navbar() {
           <Link to="/" className="flex items-center gap-3 group">
             <img
               src="/logo.png"
-              alt="OG Logo"
+              alt="Obech Logo"
               className="w-10 h-10 object-contain"
             />
             <span className="text-white font-heading font-black text-xl tracking-tight group-hover:text-orange transition-colors">
@@ -62,10 +63,10 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              to="/booking"
-              className="ml-4 px-6 py-2.5 bg-orange text-white text-sm font-semibold uppercase tracking-wider rounded hover:bg-orange-light transition-all duration-200 hover:translate-x-1"
+              to="/quote"
+              className="ml-4 px-6 py-2.5 bg-orange text-white text-sm font-semibold uppercase tracking-wider rounded hover:bg-orange-light transition-all duration-200 shadow-md flex items-center gap-2"
             >
-              Booking
+              Get a Quote
             </Link>
           </div>
 
@@ -105,10 +106,10 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link
-                to="/booking"
-                className="block mt-3 px-4 py-3 bg-orange text-white text-sm font-semibold uppercase tracking-wider rounded-lg text-center"
+                to="/quote"
+                className="block mt-3 px-4 py-3 bg-orange text-white text-sm font-semibold uppercase tracking-wider rounded-lg text-center shadow-md"
               >
-                Booking
+                Get a Quote
               </Link>
             </div>
           </motion.div>

@@ -185,10 +185,10 @@ export default function About() {
           </p>
           <div className="flex flex-wrap justify-center gap-4 mt-8">
             <Link
-              to="/booking"
+              to="/quote"
               className="flex items-center gap-2 px-8 py-3.5 bg-orange text-white font-semibold text-sm uppercase tracking-wider rounded hover:bg-orange-light transition-all hover:translate-x-1"
             >
-              Book Now <ArrowRight size={16} />
+              Get a Quote <ArrowRight size={16} />
             </Link>
             <Link
               to="/contact"

@@ -1,16 +1,22 @@
 import React from "react";
-import HeroSection from "@/components/home/HeroSection";
+import HeroSlider from "@/components/home/HeroSlider";
 import ServicesGrid from "@/components/home/ServicesGrid";
 import WhyChooseUs from "@/components/home/WhyChooseUs";
-import GlobalReach from "@/components/home/GlobalReach";
+import TestimonialsSection from "@/components/home/TestimonialsSection";
+import GetQuoteSection from "@/components/home/GetQuoteSection";
+import StatsCounter from "@/components/home/StatsCounter";
+import CtaSection from "@/components/home/CtaSection";
 
 export default function Home() {
   return (
     <>
-      <HeroSection />
+      <HeroSlider />
       <ServicesGrid />
-      <GlobalReach />
       <WhyChooseUs />
+      <TestimonialsSection />
+      <GetQuoteSection />
+      <StatsCounter />
+      <CtaSection />
     </>
   );
 }

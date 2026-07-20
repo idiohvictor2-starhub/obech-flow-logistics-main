@@ -26,6 +26,7 @@ import AdminReports from "@/pages/admin/AdminReports";
 import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminLocations from "@/pages/admin/AdminLocations";
 import AdminPricing from "@/pages/admin/AdminPricing";
+import AdminHomepageContent from "@/pages/admin/AdminHomepageContent";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
           
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/homepage" element={<AdminHomepageContent />} />
             <Route path="/admin/bookings" element={<AdminBookings />} />
             <Route path="/admin/tracking" element={<AdminTracking />} />
             <Route path="/admin/photos" element={<AdminPhotos />} />
