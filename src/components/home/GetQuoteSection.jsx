@@ -7,9 +7,9 @@ import PhoneInput from "@/components/ui/PhoneInput";
 import { COUNTRIES } from "@/data/countries";
 
 const FREIGHT_TYPES = [
-  { value: "Air Freight", label: "Air Freight (Flagship Service)", icon: Plane },
-  { value: "Sea Freight", label: "Sea Freight (Ocean Cargo)", icon: Ship },
-  { value: "Express Courier", label: "Express Courier (DHL/UPS/FedEx)", icon: PackageCheck },
+  { value: "Air Express", label: "Air Express", icon: Plane },
+  { value: "Air Cargo", label: "Air Cargo", icon: Plane },
+  { value: "Sea Freight", label: "Sea Freight", icon: Ship },
 ];
 
 const INITIAL_FORM = {
@@ -17,7 +17,7 @@ const INITIAL_FORM = {
   email: "",
   dialCode: "+234",
   phone: "",
-  freightType: "Air Freight",
+  freightType: "Air Express",
   originCountry: "Nigeria",
   originCountryCode: "NG",
   destinationCountry: "United States",
@@ -354,11 +354,11 @@ export default function GetQuoteSection() {
                   </div>
                 </div>
 
-                {/* Optional Dimensions (L x W x H cm) */}
+                {/* Optional Box Dimensions (L x W x H cm) */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-xs font-semibold text-white/80 uppercase tracking-wider">
-                      Cargo Dimensions (cm) - Optional
+                      Box Dimension (cm) - Optional
                     </label>
                     {volumetricWeight && (
                       <span className="text-xs text-orange font-mono font-semibold">
@@ -404,7 +404,7 @@ export default function GetQuoteSection() {
                     value={form.additionalMessage}
                     onChange={handleChange}
                     rows={2}
-                    placeholder="Provide any extra details like door delivery, insurance request, etc."
+                    placeholder="Provide any extra details (e.g. Value of each items, door delivery, special handling, etc.)"
                     className="w-full px-4 py-2.5 bg-navy border border-white/15 rounded-lg text-white text-sm placeholder-white/40 focus:outline-none focus:border-orange transition-colors resize-none"
                   />
                 </div>

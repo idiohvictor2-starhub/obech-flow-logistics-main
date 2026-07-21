@@ -108,7 +108,7 @@ export default function HeroSlider() {
       <div className="absolute top-8 left-4 sm:left-8 z-10 hidden md:flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-xs text-white/90">
         <span className="w-2 h-2 rounded-full bg-orange animate-ping" />
         <span className="font-semibold uppercase tracking-wider text-[11px] text-orange">Flagship Service:</span>
-        <span>International Air Cargo Logistics</span>
+        <span>International Air Freight Services</span>
       </div>
 
       {/* Slide Content */}
