@@ -139,12 +139,25 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchDashboardData();
 
+    // Subscribe to real-time updates of shipments table
+    const channel = supabase
+      .channel("admin-dashboard-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shipments" },
+        () => fetchDashboardData()
+      )
+      .subscribe();
+
     // Auto-refresh daily schedule / polling every 3 minutes
     const timer = setInterval(() => {
       fetchDashboardData();
     }, 3 * 60 * 1000);
 
-    return () => clearInterval(timer);
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(timer);
+    };
   }, [fetchDashboardData]);
 
   const statCards = [

@@ -5,7 +5,6 @@ import { supabase } from '@/lib/supabase';
 
 const CMS_STORAGE_KEY = "obech_cms_content_v1";
 const QUOTES_STORAGE_KEY = "obech_quote_requests_v1";
-const CMS_ROW_ID = "c0c59e77-1234-5678-abcd-ef1234567890"; // Persistent row ID inside locations table
 
 export const DEFAULT_SLIDES = [
   {
@@ -101,14 +100,14 @@ cmsChannel
   .subscribe();
 
 /**
- * Loads dynamic CMS copy and settings persistently from Supabase locations table
+ * Loads dynamic CMS copy and settings persistently from Supabase site_settings table
  */
 export async function loadCmsDataFromCloud() {
   try {
     const { data, error } = await supabase
-      .from("locations")
-      .select("address")
-      .eq("id", CMS_ROW_ID)
+      .from("site_settings")
+      .select("value")
+      .eq("key", "cms_content")
       .maybeSingle();
 
     if (error) {
@@ -116,16 +115,12 @@ export async function loadCmsDataFromCloud() {
       return null;
     }
 
-    if (data && data.address) {
-      try {
-        const parsed = JSON.parse(data.address);
-        localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(parsed));
-        // Notify all active React state components
-        window.dispatchEvent(new CustomEvent("obech_cms_updated", { detail: parsed }));
-        return parsed;
-      } catch (parseErr) {
-        console.error("Failed to parse remote CMS payload:", parseErr);
-      }
+    if (data && data.value) {
+      const parsed = data.value;
+      localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(parsed));
+      // Notify all active React state components
+      window.dispatchEvent(new CustomEvent("obech_cms_updated", { detail: parsed }));
+      return parsed;
     }
   } catch (err) {
     console.warn("Supabase check cloud CMS error:", err);
@@ -187,15 +182,13 @@ export function saveCmsData(data) {
       payload: updated,
     });
 
-    // Persist persistently to Supabase database (uses locations table which permits SELECT public and ALL authenticated write)
+    // Persist persistently to Supabase database (uses site_settings table)
     supabase
-      .from("locations")
+      .from("site_settings")
       .upsert({
-        id: CMS_ROW_ID,
-        name: "cms_content",
-        address: JSON.stringify(updated),
-        city: "CMS Store",
-        is_active: true,
+        key: "cms_content",
+        value: updated,
+        updated_at: new Date().toISOString()
       })
       .then(({ error }) => {
         if (error) {
@@ -230,7 +223,7 @@ export function getQuoteRequests() {
 export async function saveQuoteRequest(quoteData) {
   try {
     const timestamp = new Date().toISOString();
-    const trackingId = `OBL-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const trackingId = `OBQ-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const newQuote = {
       id: "quote-" + Date.now(),
