@@ -252,24 +252,26 @@ export async function saveQuoteRequest(quoteData) {
     const updated = [newQuote, ...existing];
     localStorage.setItem(QUOTES_STORAGE_KEY, JSON.stringify(updated));
 
-    // Try Supabase insert
+    // Try Supabase insert (Mapped correctly to DB schema)
     try {
       await supabase.from("shipments").insert({
         tracking_id: trackingId,
         client_name: quoteData.fullName,
         client_email: quoteData.email,
         client_phone: `${quoteData.dialCode || ""} ${quoteData.phone}`.trim(),
-        service_type: quoteData.freightType,
         sender_address: `${quoteData.originCountry} (${quoteData.originCountryCode || ""})`,
+        receiver_name: "Quote Inquiry",
         receiver_address: `${quoteData.destinationCountry} (${quoteData.destinationCountryCode || ""})`,
-        goods_description: quoteData.cargoDescription,
-        weight: parseFloat(quoteData.estimatedWeight) || 0,
+        package_type: quoteData.cargoDescription || "General Cargo",
+        weight_kg: parseFloat(quoteData.estimatedWeight) || 0,
+        delivery_type: quoteData.freightType || "Air Cargo",
         special_instructions: [
           quoteData.additionalMessage,
           quoteData.dimensions ? `Dimensions: ${quoteData.dimensions}` : null,
           quoteData.volumetricWeight ? `Volumetric Wt: ${quoteData.volumetricWeight} kg` : null,
         ].filter(Boolean).join(" | "),
         status: "pending",
+        booking_source: "online",
         created_at: timestamp,
       });
     } catch (dbErr) {
@@ -331,7 +333,7 @@ export async function saveDirectBooking(bookingData) {
     const existing = JSON.parse(localStorage.getItem("obech_bookings_v1") || "[]");
     localStorage.setItem("obech_bookings_v1", JSON.stringify([newBooking, ...existing]));
 
-    // Try Supabase insert
+    // Try Supabase insert (Mapped correctly to DB schema)
     try {
       await supabase.from("shipments").insert({
         tracking_id: trackingId,
@@ -342,11 +344,10 @@ export async function saveDirectBooking(bookingData) {
         receiver_name: bookingData.receiverName,
         receiver_address: bookingData.receiverAddress,
         receiver_phone: `${bookingData.receiverDialCode || ""} ${bookingData.receiverPhone}`.trim(),
-        goods_description: bookingData.itemName,
-        weight: parseFloat(bookingData.weight) || 0,
-        package_type: bookingData.packageType || "general",
+        package_type: bookingData.itemName, // Map item name to package_type
+        weight_kg: parseFloat(bookingData.weight) || 0, // Map to weight_kg
         delivery_type: bookingData.deliveryType || "standard",
-        special_instructions: `Receiver Email: ${bookingData.receiverEmail || "N/A"}`,
+        special_instructions: `Category: ${bookingData.packageType || "general"} | Receiver Email: ${bookingData.receiverEmail || "N/A"}`,
         status: "pending",
         booking_source: "online",
         created_at: timestamp,

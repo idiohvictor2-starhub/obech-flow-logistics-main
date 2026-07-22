@@ -45,6 +45,19 @@ export default function AdminBookings() {
 
   useEffect(() => {
     fetchData();
+
+    const channel = supabase
+      .channel("admin-bookings-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "shipments" },
+        () => fetchData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleClearBookings = async () => {
@@ -370,44 +383,76 @@ export default function AdminBookings() {
                   <p className="text-xs text-orange font-mono uppercase tracking-widest">Tracking ID</p>
                   <p className="text-2xl font-mono font-bold">{selectedShipment.tracking_id}</p>
                 </div>
-              </div>
-
-              {/* Drawer Body */}
+              </div>              {/* Drawer Body */}
               <div className="p-6 flex-1 bg-slate-50 overflow-y-auto space-y-8">
                 
                 {/* Summary Info */}
-                <div className="bg-white rounded-xl border border-steel p-5 grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-semibold">Client</p>
-                    <p className="font-bold text-navy mt-1">{selectedShipment.client_name}</p>
-                    <p className="text-muted-foreground">{selectedShipment.client_email}</p>
-                    <p className="text-muted-foreground">{selectedShipment.client_phone}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground uppercase font-semibold">Package Type</p>
-                    <p className="font-bold text-navy mt-1 capitalize">{selectedShipment.package_type || "—"}</p>
-                    <p className="text-muted-foreground">{selectedShipment.weight_kg ? `${selectedShipment.weight_kg} kg` : ""}</p>
-                  </div>
-                  <div className="col-span-2 mt-2 pt-4 border-t border-steel">
-                    <p className="text-xs text-muted-foreground uppercase font-semibold">Route Overview</p>
-                    <div className="flex items-center gap-3 mt-2 font-semibold text-navy">
-                      <span>{selectedShipment.sender_address}</span>
-                      <Truck size={14} className="text-orange" />
-                      <span>{selectedShipment.receiver_address}</span>
+                <div className="bg-white rounded-xl border border-steel p-5 space-y-6 text-sm">
+                  <div className="flex justify-between items-center pb-3 border-b border-steel">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Booking Source</p>
+                      <span className={`inline-block px-2.5 py-1 rounded text-xs font-bold uppercase mt-1 ${
+                        selectedShipment.booking_source === "online"
+                          ? "bg-indigo-100 text-indigo-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}>
+                        {selectedShipment.booking_source || "office"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold text-right">Delivery Mode</p>
+                      <p className="font-bold text-navy mt-1 capitalize text-right">{selectedShipment.delivery_type || "standard"}</p>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-6 pb-4 border-b border-steel">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Sender Details (Origin)</p>
+                      <p className="font-bold text-navy mt-1">{selectedShipment.client_name}</p>
+                      <p className="text-muted-foreground text-xs">{selectedShipment.client_email}</p>
+                      <p className="text-muted-foreground text-xs">{selectedShipment.client_phone}</p>
+                      <p className="text-navy text-xs mt-2 font-medium bg-slate-50 p-2 rounded border border-steel"><span className="font-semibold">Address:</span> {selectedShipment.sender_address}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Receiver Details (Destination)</p>
+                      <p className="font-bold text-navy mt-1">{selectedShipment.receiver_name || "—"}</p>
+                      <p className="text-muted-foreground text-xs">{selectedShipment.receiver_phone || "—"}</p>
+                      <p className="text-navy text-xs mt-2 font-medium bg-slate-50 p-2 rounded border border-steel"><span className="font-semibold">Address:</span> {selectedShipment.receiver_address}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Name of Items</p>
+                      <p className="font-bold text-navy mt-1">{selectedShipment.package_type || "—"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Weight (kg)</p>
+                      <p className="font-bold text-navy mt-1">{selectedShipment.weight_kg ? `${selectedShipment.weight_kg} kg` : "—"}</p>
+                    </div>
+                  </div>
+
+                  {selectedShipment.special_instructions && (
+                    <div className="mt-2 pt-4 border-t border-steel">
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Notes / Instructions</p>
+                      <p className="text-navy text-xs mt-1 bg-slate-50 p-3 rounded border border-steel italic leading-relaxed">{selectedShipment.special_instructions}</p>
+                    </div>
+                  )}
                 </div>
 
-                {selectedShipment.receipt_number && (
-                  <div className="bg-white rounded-xl border border-steel p-5">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground uppercase font-semibold">Office Receipt</p>
-                        <p className="font-mono font-bold text-navy mt-1">{selectedShipment.receipt_number}</p>
+                {/* Receipt management */}
+                <div className="bg-white rounded-xl border border-steel p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground uppercase font-semibold">Booking Receipt</p>
+                      <p className="font-mono font-bold text-navy mt-1">{selectedShipment.receipt_number || "Online Invoice"}</p>
+                      {selectedShipment.receipt_number && (
                         <p className="text-sm text-muted-foreground mt-2">
                           {formatNaira(selectedShipment.amount_paid)} paid · {formatNaira(Math.max(Number(selectedShipment.total_amount) - Number(selectedShipment.amount_paid), 0))} balance
                         </p>
-                      </div>
+                      )}
+                    </div>
+                    {selectedShipment.receipt_number && (
                       <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase ${
                         selectedShipment.payment_status === "paid"
                           ? "bg-green-100 text-green-700"
@@ -417,16 +462,16 @@ export default function AdminBookings() {
                       }`}>
                         {selectedShipment.payment_status}
                       </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handlePrintReceipt(selectedShipment)}
-                      className="mt-4 w-full py-2.5 border border-navy text-navy rounded-lg font-bold hover:bg-navy hover:text-white transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Printer size={16} /> Print Receipt
-                    </button>
+                    )}
                   </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => handlePrintReceipt(selectedShipment)}
+                    className="mt-4 w-full py-2.5 border border-navy text-navy rounded-lg font-bold hover:bg-navy hover:text-white transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Printer size={16} /> Print Receipt / Invoice
+                  </button>
+                </div>
 
                 {/* Update Form */}
                 <div>
