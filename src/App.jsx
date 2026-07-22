@@ -10,11 +10,13 @@ import Home from "@/pages/Home";
 import Services from "@/pages/Services";
 import Tracking from "@/pages/Tracking";
 import Quote from "@/pages/Quote";
+import BookShipment from "@/pages/BookShipment";
 import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import SiteLayout from "@/components/layout/SiteLayout";
 
 import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminResetPassword from "@/pages/admin/AdminResetPassword";
 import AdminLayout from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminBookings from "@/pages/admin/AdminBookings";
@@ -47,12 +49,14 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/track" element={<Tracking />} />
             <Route path="/quote" element={<Quote />} />
-            <Route path="/booking" element={<Quote />} />
+            <Route path="/booking" element={<BookShipment />} />
+            <Route path="/book" element={<BookShipment />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
           </Route>
 
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/reset-password" element={<AdminResetPassword />} />
           
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminDashboard />} />
