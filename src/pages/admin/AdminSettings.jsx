@@ -1,25 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Settings, Save } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { getCmsData, saveCmsData } from "@/utils/cmsStorage";
 
 export default function AdminSettings() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [config, setConfig] = useState({
-    siteName: "Obech Flow Logistics",
-    contactPhone: "+233 24 000 0000",
+    siteName: "Obech Global Logistics",
+    contactPhone: "+2349066755440",
   });
 
-  const handleSave = (e) => {
+  useEffect(() => {
+    const cms = getCmsData();
+    if (cms?.settings) {
+      setConfig({
+        siteName: cms.settings.siteName || "Obech Global Logistics",
+        contactPhone: cms.settings.contactPhone || "+2349066755440",
+      });
+    }
+
+    const handleCmsUpdate = (e) => {
+      if (e.detail?.settings) {
+        setConfig({
+          siteName: e.detail.settings.siteName || "Obech Global Logistics",
+          contactPhone: e.detail.settings.contactPhone || "+2349066755440",
+        });
+      }
+    };
+
+    window.addEventListener("obech_cms_updated", handleCmsUpdate);
+    return () => window.removeEventListener("obech_cms_updated", handleCmsUpdate);
+  }, []);
+
+  const handleSave = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+
+    try {
+      const cms = getCmsData();
+      const updatedSettings = {
+        ...cms.settings,
+        siteName: config.siteName,
+        contactPhone: config.contactPhone,
+        whatsappNumber: config.contactPhone, // Sync WhatsApp number with contact phone
+      };
+
+      saveCmsData({ settings: updatedSettings });
+
       toast({
         title: "Settings Saved",
         description: "Your system settings have been updated successfully.",
       });
-    }, 600);
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      toast({
+        title: "Error Saving Settings",
+        description: err.message || "Could not save settings.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -27,7 +69,7 @@ export default function AdminSettings() {
       <div>
         <h1 className="text-2xl font-heading font-black text-navy">System Settings</h1>
         <p className="text-muted-foreground mt-1">
-          Configure global system variables and contact details.
+          Configure global system variables and contact details. All changes broadcast live across visitor browsers.
         </p>
       </div>
 
@@ -52,7 +94,7 @@ export default function AdminSettings() {
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-              Support Phone Number
+              Support Phone Number (WhatsApp)
             </label>
             <input
               type="text"
@@ -67,7 +109,7 @@ export default function AdminSettings() {
           <button
             type="submit"
             disabled={loading}
-            className="px-6 py-3 bg-orange text-white rounded-lg font-semibold uppercase tracking-wider hover:bg-orange-light flex items-center gap-2 disabled:opacity-50 transition-all text-xs"
+            className="px-6 py-3 bg-orange text-white rounded-lg font-semibold uppercase tracking-wider hover:bg-orange-light flex items-center gap-2 disabled:opacity-50 transition-all text-xs font-heading"
           >
             <Save size={16} />
             {loading ? "Saving..." : "Save Settings"}

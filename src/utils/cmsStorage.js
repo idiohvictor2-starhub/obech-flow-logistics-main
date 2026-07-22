@@ -77,12 +77,27 @@ export const DEFAULT_CTA = {
 };
 
 export const DEFAULT_SETTINGS = {
+  siteName: "Obech Global Logistics",
   whatsappNumber: "+2349066755440",
   contactPhone: "+2349066755440",
   contactEmail: "info@obechlogistics.com",
   mainOffice: "21 road opposite I close, Festac town, Lagos",
   dropoffAddress: "2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261 (Beside Greenews Hotel)",
 };
+
+// Initialize Supabase Realtime Broadcast Channel for Live Updates
+const cmsChannel = supabase.channel("obech-cms-realtime");
+
+cmsChannel
+  .on("broadcast", { event: "cms_update" }, ({ payload }) => {
+    try {
+      localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(payload));
+      window.dispatchEvent(new CustomEvent("obech_cms_updated", { detail: payload }));
+    } catch (err) {
+      console.warn("Unable to write broadcast update to LocalStorage:", err);
+    }
+  })
+  .subscribe();
 
 /**
  * Retrieves CMS settings & dynamic text from LocalStorage with fallback to defaults
@@ -120,14 +135,24 @@ export function getCmsData() {
 }
 
 /**
- * Saves modified CMS data to LocalStorage
+ * Saves modified CMS data to LocalStorage and Broadcasts Live to all other clients
  */
 export function saveCmsData(data) {
   try {
     const current = getCmsData();
     const updated = { ...current, ...data };
     localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(updated));
+
+    // Dispatch locally for instant reactivity in current tab
     window.dispatchEvent(new CustomEvent("obech_cms_updated", { detail: updated }));
+
+    // Send Realtime Broadcast to all other open browsers/tabs instantly
+    cmsChannel.send({
+      type: "broadcast",
+      event: "cms_update",
+      payload: updated,
+    });
+
     return updated;
   } catch (err) {
     console.error("Error saving CMS data:", err);

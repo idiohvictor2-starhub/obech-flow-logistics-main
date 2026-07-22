@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, ChevronRight, FileText } from "lucide-react";
+import { Menu, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { getCmsData } from "@/utils/cmsStorage";
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
@@ -9,17 +10,36 @@ const NAV_LINKS = [
   { label: "Tracking", path: "/track" },
   { label: "About", path: "/about" },
   { label: "Contact", path: "/contact" },
+  { label: "Admin Portal", path: "/admin" },
 ];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [siteName, setSiteName] = useState("Obech Global Logistics");
   const location = useLocation();
 
   useEffect(() => {
+    // Load initial settings name
+    const cms = getCmsData();
+    if (cms?.settings?.siteName) {
+      setSiteName(cms.settings.siteName);
+    }
+
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
+
+    const handleCmsUpdate = (e) => {
+      if (e.detail?.settings?.siteName) {
+        setSiteName(e.detail.settings.siteName);
+      }
+    };
+    window.addEventListener("obech_cms_updated", handleCmsUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("obech_cms_updated", handleCmsUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -42,8 +62,8 @@ export default function Navbar() {
               alt="Obech Logo"
               className="w-10 h-10 object-contain"
             />
-            <span className="text-white font-heading font-black text-xl tracking-tight group-hover:text-orange transition-colors">
-              Obech Global
+            <span className="text-white font-heading font-black text-lg sm:text-xl tracking-tight group-hover:text-orange transition-colors">
+              {siteName}
             </span>
           </Link>
 
