@@ -10,7 +10,7 @@ const NAV_LINKS = [
   { label: "Tracking", path: "/track" },
   { label: "About", path: "/about" },
   { label: "Contact", path: "/contact" },
-  { label: "Admin Portal", path: "/admin" },
+  { label: "Book a Shipment", path: "/booking" },
 ];
 
 export default function Navbar() {

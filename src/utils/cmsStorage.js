@@ -310,3 +310,77 @@ export async function saveQuoteRequest(quoteData) {
     throw err;
   }
 }
+
+/**
+ * Saves a direct customer shipment booking and triggers transactional emails
+ */
+export async function saveDirectBooking(bookingData) {
+  try {
+    const timestamp = new Date().toISOString();
+    const trackingId = `OBL-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    const newBooking = {
+      id: "booking-" + Date.now(),
+      tracking_id: trackingId,
+      created_at: timestamp,
+      status: "pending",
+      ...bookingData,
+    };
+
+    // Store in localStorage
+    const existing = JSON.parse(localStorage.getItem("obech_bookings_v1") || "[]");
+    localStorage.setItem("obech_bookings_v1", JSON.stringify([newBooking, ...existing]));
+
+    // Try Supabase insert
+    try {
+      await supabase.from("shipments").insert({
+        tracking_id: trackingId,
+        client_name: bookingData.senderName,
+        client_email: bookingData.senderEmail,
+        client_phone: `${bookingData.senderDialCode || ""} ${bookingData.senderPhone}`.trim(),
+        sender_address: bookingData.senderAddress,
+        receiver_name: bookingData.receiverName,
+        receiver_address: bookingData.receiverAddress,
+        receiver_phone: `${bookingData.receiverDialCode || ""} ${bookingData.receiverPhone}`.trim(),
+        goods_description: bookingData.itemName,
+        weight: parseFloat(bookingData.weight) || 0,
+        package_type: bookingData.packageType || "general",
+        delivery_type: bookingData.deliveryType || "standard",
+        special_instructions: `Receiver Email: ${bookingData.receiverEmail || "N/A"}`,
+        status: "pending",
+        booking_source: "online",
+        created_at: timestamp,
+      });
+    } catch (dbErr) {
+      console.warn("Supabase booking insert fallback to local storage:", dbErr);
+    }
+
+    // Direct invocation to send email notification to admin & customer (type: INSERT)
+    try {
+      await supabase.functions.invoke("send-email", {
+        body: {
+          type: "INSERT",
+          record: {
+            tracking_id: trackingId,
+            client_name: bookingData.senderName,
+            client_email: bookingData.senderEmail,
+            client_phone: `${bookingData.senderDialCode || ""} ${bookingData.senderPhone}`.trim(),
+            sender_address: bookingData.senderAddress,
+            receiver_address: bookingData.receiverAddress,
+            package_type: bookingData.packageType || "general",
+            weight_kg: bookingData.weight,
+            delivery_type: bookingData.deliveryType || "standard",
+            status: "pending",
+          },
+        },
+      });
+    } catch (emailErr) {
+      console.warn("Direct booking notification email trigger failed:", emailErr);
+    }
+
+    return newBooking;
+  } catch (err) {
+    console.error("Error saving direct booking:", err);
+    throw err;
+  }
+}
