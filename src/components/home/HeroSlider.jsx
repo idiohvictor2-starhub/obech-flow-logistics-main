@@ -105,7 +105,7 @@ export default function HeroSlider() {
       </AnimatePresence>
 
       {/* Decorative Brand Accent Badges */}
-      <div className="absolute top-8 left-4 sm:left-8 z-10 hidden md:flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-xs text-white/90">
+      <div className="absolute top-20 left-4 sm:left-8 z-10 hidden md:flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full text-xs text-white/90">
         <span className="w-2 h-2 rounded-full bg-orange animate-ping" />
         <span className="font-semibold uppercase tracking-wider text-[11px] text-orange">Flagship Service:</span>
         <span>International Air Freight Services</span>
@@ -170,11 +170,10 @@ export default function HeroSlider() {
             key={s.id || idx}
             onClick={() => setCurrentIndex(idx)}
             aria-label={`Go to slide ${idx + 1}`}
-            className={`transition-all duration-500 rounded-full ${
-              idx === currentIndex
+            className={`transition-all duration-500 rounded-full ${idx === currentIndex
                 ? "w-8 h-2.5 bg-orange"
                 : "w-2.5 h-2.5 bg-white/40 hover:bg-white/70"
-            }`}
+              }`}
           />
         ))}
       </div>
