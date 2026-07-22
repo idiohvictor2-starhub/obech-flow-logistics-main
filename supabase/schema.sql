@@ -74,6 +74,7 @@ CREATE TABLE public.shipments (
     driver_id uuid REFERENCES public.drivers(id),
     status text DEFAULT 'pending', -- pending | confirmed | picked_up | in_transit | out_for_delivery | delivered | failed
     status_note text, -- internal admin note on last update
+    special_instructions text, -- customer notes and instructions
     estimated_delivery date,
     booking_source text NOT NULL DEFAULT 'online' CHECK (booking_source IN ('online', 'office')),
     receipt_number text UNIQUE,

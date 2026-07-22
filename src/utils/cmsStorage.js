@@ -312,7 +312,7 @@ export async function saveQuoteRequest(quoteData) {
 export async function saveDirectBooking(bookingData) {
   try {
     const timestamp = new Date().toISOString();
-    const trackingId = `OBL-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const trackingId = bookingData.tracking_id || bookingData.id || `OBL-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const newBooking = {
       id: "booking-" + Date.now(),
@@ -322,29 +322,40 @@ export async function saveDirectBooking(bookingData) {
       ...bookingData,
     };
 
-    // Store in localStorage
+    // Store in localStorage as backup / offline copy
     const existing = JSON.parse(localStorage.getItem("obech_bookings_v1") || "[]");
     localStorage.setItem("obech_bookings_v1", JSON.stringify([newBooking, ...existing]));
 
-    // Try Supabase insert (Mapped correctly to DB schema)
+    // Try Supabase insert into `shipments` table (used by Admin Dashboard)
     try {
-      await supabase.from("shipments").insert({
-        tracking_id: trackingId,
-        client_name: bookingData.senderName,
-        client_email: bookingData.senderEmail,
-        client_phone: `${bookingData.senderDialCode || ""} ${bookingData.senderPhone}`.trim(),
-        sender_address: bookingData.senderAddress,
-        receiver_name: bookingData.receiverName,
-        receiver_address: bookingData.receiverAddress,
-        receiver_phone: `${bookingData.receiverDialCode || ""} ${bookingData.receiverPhone}`.trim(),
-        package_type: bookingData.itemName, // Map item name to package_type
-        weight_kg: parseFloat(bookingData.weight) || 0, // Map to weight_kg
-        delivery_type: bookingData.deliveryType || "standard",
-        special_instructions: `Category: ${bookingData.packageType || "general"} | Receiver Email: ${bookingData.receiverEmail || "N/A"}`,
-        status: "pending",
-        booking_source: "online",
-        created_at: timestamp,
-      });
+      const { data, error } = await supabase
+        .from("shipments")
+        .insert({
+          tracking_id: trackingId,
+          client_name: bookingData.senderName,
+          client_email: bookingData.senderEmail || null,
+          client_phone: `${bookingData.senderDialCode || ""} ${bookingData.senderPhone}`.trim(),
+          sender_address: bookingData.senderAddress,
+          receiver_name: bookingData.receiverName,
+          receiver_address: bookingData.receiverAddress,
+          receiver_phone: `${bookingData.receiverDialCode || ""} ${bookingData.receiverPhone}`.trim(),
+          package_type: bookingData.itemName || bookingData.packageType || "general",
+          weight_kg: parseFloat(bookingData.weight) || null,
+          delivery_type: bookingData.deliveryType || "standard",
+          special_instructions: `Category: ${bookingData.packageType || "general"} | Receiver Email: ${bookingData.receiverEmail || "N/A"}`,
+          status: "pending",
+          booking_source: "online",
+          created_at: timestamp,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Supabase direct booking insert error:", error);
+      } else if (data) {
+        newBooking.id = data.id || newBooking.id;
+        newBooking.tracking_id = data.tracking_id || trackingId;
+      }
     } catch (dbErr) {
       console.warn("Supabase booking insert fallback to local storage:", dbErr);
     }
