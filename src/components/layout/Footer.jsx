@@ -29,16 +29,31 @@ const SOCIALS = [
 ];
 
 export default function Footer() {
-  const [whatsappNumber, setWhatsappNumber] = useState("+2349066755440");
+  const [settings, setSettings] = useState({
+    siteName: "Obech Global Logistics",
+    whatsappNumber: "+2349066755440",
+    contactPhone: "+2349066755440",
+    contactEmail: "info@obechlogistics.com",
+    mainOffice: "21 road opposite I close, Festac town, Lagos",
+  });
 
   useEffect(() => {
+    // Initial load
     const cms = getCmsData();
-    if (cms?.settings?.whatsappNumber) {
-      setWhatsappNumber(cms.settings.whatsappNumber);
+    if (cms?.settings) {
+      setSettings(cms.settings);
     }
+
+    const handleCmsUpdate = (e) => {
+      if (e.detail?.settings) {
+        setSettings(e.detail.settings);
+      }
+    };
+    window.addEventListener("obech_cms_updated", handleCmsUpdate);
+    return () => window.removeEventListener("obech_cms_updated", handleCmsUpdate);
   }, []);
 
-  const cleanWaNumber = whatsappNumber.replace(/[^0-9]/g, "");
+  const cleanWaNumber = (settings.whatsappNumber || settings.contactPhone || "").replace(/[^0-9]/g, "");
 
   return (
     <footer className="bg-navy text-white">
@@ -157,20 +172,20 @@ export default function Footer() {
                 <MapPin size={16} className="text-orange mt-1 shrink-0" />
                 <div className="flex flex-col gap-2 text-sm text-white/50">
                   <a
-                    href="https://maps.google.com/?q=21+road+opposite+I+close,+Festac+town,+Lagos"
+                    href={`https://maps.google.com/?q=${encodeURIComponent(settings.mainOffice)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-white transition-colors"
                   >
                     <strong className="text-white">Main Office:</strong><br />
-                    21 road opposite I close, Festac town, Lagos
+                    {settings.mainOffice}
                   </a>
                 </div>
               </li>
               <li className="flex items-center gap-3">
                 <Phone size={16} className="text-orange shrink-0" />
-                <a href="tel:+2349066755440" className="text-sm text-white/50 hover:text-white transition-colors">
-                  +234 906 675 5440
+                <a href={`tel:${settings.contactPhone}`} className="text-sm text-white/50 hover:text-white transition-colors">
+                  {settings.contactPhone}
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -181,14 +196,14 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-emerald-400 font-medium hover:underline"
                 >
-                  WhatsApp: {whatsappNumber}
+                  WhatsApp: {settings.whatsappNumber || settings.contactPhone}
                 </a>
               </li>
               <li className="flex items-start gap-3">
                 <Mail size={16} className="text-orange mt-0.5 shrink-0" />
                 <div className="flex flex-col text-sm text-white/50 break-all">
-                  <a href="mailto:info@obechlogistics.com" className="hover:text-white transition-colors">
-                    info@obechlogistics.com
+                  <a href={`mailto:${settings.contactEmail}`} className="hover:text-white transition-colors">
+                    {settings.contactEmail}
                   </a>
                 </div>
               </li>
@@ -201,7 +216,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} Obech Global Logistics. All rights reserved.
+            © {new Date().getFullYear()} {settings.siteName}. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link to="/about" className="text-xs text-white/30 hover:text-white/60 transition-colors">

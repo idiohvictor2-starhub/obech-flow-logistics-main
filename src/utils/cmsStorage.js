@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 
 const CMS_STORAGE_KEY = "obech_cms_content_v1";
 const QUOTES_STORAGE_KEY = "obech_quote_requests_v1";
+const CMS_ROW_ID = "c0c59e77-1234-5678-abcd-ef1234567890"; // Persistent row ID inside locations table
 
 export const DEFAULT_SLIDES = [
   {
@@ -100,6 +101,39 @@ cmsChannel
   .subscribe();
 
 /**
+ * Loads dynamic CMS copy and settings persistently from Supabase locations table
+ */
+export async function loadCmsDataFromCloud() {
+  try {
+    const { data, error } = await supabase
+      .from("locations")
+      .select("address")
+      .eq("id", CMS_ROW_ID)
+      .maybeSingle();
+
+    if (error) {
+      console.warn("Unable to retrieve persistent CMS from Supabase cloud:", error.message);
+      return null;
+    }
+
+    if (data && data.address) {
+      try {
+        const parsed = JSON.parse(data.address);
+        localStorage.setItem(CMS_STORAGE_KEY, JSON.stringify(parsed));
+        // Notify all active React state components
+        window.dispatchEvent(new CustomEvent("obech_cms_updated", { detail: parsed }));
+        return parsed;
+      } catch (parseErr) {
+        console.error("Failed to parse remote CMS payload:", parseErr);
+      }
+    }
+  } catch (err) {
+    console.warn("Supabase check cloud CMS error:", err);
+  }
+  return null;
+}
+
+/**
  * Retrieves CMS settings & dynamic text from LocalStorage with fallback to defaults
  */
 export function getCmsData() {
@@ -135,7 +169,7 @@ export function getCmsData() {
 }
 
 /**
- * Saves modified CMS data to LocalStorage and Broadcasts Live to all other clients
+ * Saves modified CMS data to LocalStorage, Broadcasts Live to other clients, and persists to Supabase cloud
  */
 export function saveCmsData(data) {
   try {
@@ -152,6 +186,24 @@ export function saveCmsData(data) {
       event: "cms_update",
       payload: updated,
     });
+
+    // Persist persistently to Supabase database (uses locations table which permits SELECT public and ALL authenticated write)
+    supabase
+      .from("locations")
+      .upsert({
+        id: CMS_ROW_ID,
+        name: "cms_content",
+        address: JSON.stringify(updated),
+        city: "CMS Store",
+        is_active: true,
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.error("Could not write persistent CMS update to Supabase cloud database:", error.message);
+        } else {
+          console.log("Successfully persisted updated CMS data to Supabase cloud.");
+        }
+      });
 
     return updated;
   } catch (err) {

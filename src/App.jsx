@@ -28,7 +28,14 @@ import AdminLocations from "@/pages/admin/AdminLocations";
 import AdminPricing from "@/pages/admin/AdminPricing";
 import AdminHomepageContent from "@/pages/admin/AdminHomepageContent";
 
+import { useEffect } from "react";
+import { loadCmsDataFromCloud } from "@/utils/cmsStorage";
+
 function App() {
+  useEffect(() => {
+    loadCmsDataFromCloud();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClientInstance}>
       <Router>
