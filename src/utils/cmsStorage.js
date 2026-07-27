@@ -80,7 +80,7 @@ export const DEFAULT_SETTINGS = {
   siteName: "Obech Global Logistics",
   whatsappNumber: "+2349066755440",
   contactPhone: "+2349066755440",
-  contactEmail: "info@obechlogistics.com",
+  // contactEmail: "info@obechlogistics.com",
   mainOffice: "21 road opposite I close, Festac town, Lagos",
   dropoffAddress: "2 Kunle Akinosi St, Orile Oshodi 102214, Lagos 100261 (Beside Greenews Hotel)",
 };

@@ -129,9 +129,9 @@ export default function Contact() {
                     </div>
                     <div>
                       <p className="text-xs text-white/40 uppercase tracking-wider">Email</p>
-                      <a href="mailto:info@obechlogistics.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
+                      {/* <a href="mailto:info@obechlogistics.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
                         info@obechlogistics.com
-                      </a>
+                      </a> */}
                       <a href="mailto:obechlogistics@gmail.com" className="text-white text-sm mt-1 block hover:text-orange transition-colors break-all">
                         obechlogistics@gmail.com
                       </a>

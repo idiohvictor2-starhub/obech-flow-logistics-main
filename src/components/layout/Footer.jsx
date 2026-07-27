@@ -33,7 +33,7 @@ export default function Footer() {
     siteName: "Obech Global Logistics",
     whatsappNumber: "+2349066755440",
     contactPhone: "+2349066755440",
-    contactEmail: "info@obechlogistics.com",
+    // contactEmail: "info@obechlogistics.com",
     mainOffice: "21 road opposite I close, Festac town, Lagos",
   });
 
@@ -199,14 +199,14 @@ export default function Footer() {
                   WhatsApp: {settings.whatsappNumber || settings.contactPhone}
                 </a>
               </li>
-              <li className="flex items-start gap-3">
+              {/* <li className="flex items-start gap-3">
                 <Mail size={16} className="text-orange mt-0.5 shrink-0" />
                 <div className="flex flex-col text-sm text-white/50 break-all">
                   <a href={`mailto:${settings.contactEmail}`} className="hover:text-white transition-colors">
                     {settings.contactEmail}
                   </a>
                 </div>
-              </li>
+              </li> */}
             </ul>
           </div>
         </div>
