@@ -4,7 +4,7 @@ const COMPANY = {
   name: "Obech Flow Logistics",
   address: "21 Road, opposite I Close, Festac Town, Lagos",
   phone: "+2349066755440",
-  email: "info@obechlogistics.com",
+  // email: "info@obechlogistics.com",
 };
 
 const escapeHtml = (value) =>
@@ -151,7 +151,7 @@ export const printBookingReceipt = (shipment) => {
       </div>
 
       <footer class="footer">
-        ${COMPANY.phone} · ${COMPANY.email}<br />
+        ${COMPANY.phone}${COMPANY.email ? ` · ${COMPANY.email}` : ""}<br />
         Keep this receipt and tracking ID for shipment enquiries. This document records the booking and payment position shown above.
       </footer>
     </article>
