@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
-import { formatNaira, printBookingReceipt } from "@/utils/printBookingReceipt";
+import { formatNaira, printBookingReceipt, SERVICE_TYPES } from "@/utils/printBookingReceipt";
 
 const createInitialForm = () => ({
   client_name: "",
@@ -22,7 +22,7 @@ const createInitialForm = () => ({
   package_type: "",
   weight_kg: "",
   declared_value: "",
-  delivery_type: "bike",
+  delivery_type: "Air Express",
   route_id: "",
   driver_id: "",
   estimated_delivery: "",
@@ -30,6 +30,7 @@ const createInitialForm = () => ({
   status_note: "Office walk-in booking",
   total_amount: "",
   amount_paid: "0",
+  payment_status: "unpaid",
   payment_method: "cash",
   payment_reference: "",
 });
@@ -57,13 +58,32 @@ export default function AdminOfficeBookingDialog({
   const amountPaid = Number(form.amount_paid) || 0;
   const balance = Math.max(totalAmount - amountPaid, 0);
   const paymentStatus = useMemo(() => {
+    if (form.payment_status) return form.payment_status;
     if (amountPaid <= 0) return "unpaid";
     if (amountPaid < totalAmount) return "partial";
     return "paid";
-  }, [amountPaid, totalAmount]);
+  }, [form.payment_status, amountPaid, totalAmount]);
 
   const set = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }));
+    const val = event.target.value;
+    setForm((current) => {
+      const next = { ...current, [field]: val };
+      if (field === "total_amount" || field === "amount_paid") {
+        const nextTotal = Number(next.total_amount) || 0;
+        const nextPaid = Number(next.amount_paid) || 0;
+        if (nextPaid <= 0) next.payment_status = "unpaid";
+        else if (nextPaid < nextTotal) next.payment_status = "partial";
+        else next.payment_status = "paid";
+      } else if (field === "payment_status") {
+        const nextTotal = Number(next.total_amount) || 0;
+        if (val === "paid" && nextTotal > 0) {
+          next.amount_paid = String(nextTotal);
+        } else if (val === "unpaid") {
+          next.amount_paid = "0";
+        }
+      }
+      return next;
+    });
   };
 
   const reset = () => {
@@ -92,7 +112,7 @@ export default function AdminOfficeBookingDialog({
     ) {
       toast({
         title: "Complete required fields",
-        description: "Customer, delivery, package, vehicle, and charge details are required.",
+        description: "Customer, delivery, package, service type, and charge details are required.",
         variant: "destructive",
       });
       return;
@@ -294,10 +314,10 @@ export default function AdminOfficeBookingDialog({
               <Field label="Package Description *" value={form.package_type} onChange={set("package_type")} placeholder="Documents, electronics, cartons..." />
               <Field label="Weight (kg)" type="number" min="0" step="0.01" value={form.weight_kg} onChange={set("weight_kg")} />
               <Field label="Declared Value (₦)" type="number" min="0" step="0.01" value={form.declared_value} onChange={set("declared_value")} />
-              <Select label="Vehicle Type *" value={form.delivery_type} onChange={set("delivery_type")}>
-                <option value="bike">Bike Dispatch</option>
-                <option value="van">Van Pickup</option>
-                <option value="truck">Truck Logistics</option>
+              <Select label="Service Type *" value={form.delivery_type} onChange={set("delivery_type")}>
+                {SERVICE_TYPES.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </Select>
               <Select label="Assign Driver" value={form.driver_id} onChange={set("driver_id")}>
                 <option value="">Assign later</option>
@@ -314,6 +334,11 @@ export default function AdminOfficeBookingDialog({
             <FormSection title="Charge and Payment">
               <Field label="Total Charge (₦) *" type="number" min="0" step="0.01" value={form.total_amount} onChange={set("total_amount")} />
               <Field label="Amount Paid (₦)" type="number" min="0" max={form.total_amount || undefined} step="0.01" value={form.amount_paid} onChange={set("amount_paid")} />
+              <Select label="Payment Status" value={paymentStatus} onChange={set("payment_status")}>
+                <option value="unpaid">Unpaid</option>
+                <option value="partial">Partial</option>
+                <option value="paid">Paid</option>
+              </Select>
               <Select label="Payment Method" value={form.payment_method} onChange={set("payment_method")} disabled={amountPaid <= 0}>
                 <option value="cash">Cash</option>
                 <option value="pos">POS</option>

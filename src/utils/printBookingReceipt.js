@@ -1,10 +1,32 @@
 import { format } from "date-fns";
 
 const COMPANY = {
-  name: "Obech Flow Logistics",
+  name: "Obech Logistics",
   address: "21 Road, opposite I Close, Festac Town, Lagos",
   phone: "+2349066755440",
   // email: "info@obechlogistics.com",
+};
+
+export const SERVICE_TYPES = [
+  "Air Express",
+  "Air Standard",
+  "Cargos",
+];
+
+export const formatServiceType = (value) => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "Air Express";
+  const normalized = raw.toLowerCase();
+  if (normalized === "air express" || normalized === "air_express" || normalized === "express" || normalized === "bike") {
+    return "Air Express";
+  }
+  if (normalized === "air standard" || normalized === "air_standard" || normalized === "standard") {
+    return "Air Standard";
+  }
+  if (normalized === "cargos" || normalized === "cargo" || normalized === "truck" || normalized === "van") {
+    return "Cargos";
+  }
+  return raw;
 };
 
 const escapeHtml = (value) =>
@@ -49,7 +71,7 @@ export const printBookingReceipt = (shipment) => {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${displayValue(shipment.receipt_number || "Booking Receipt")}</title>
     <style>
-      * { box-sizing: border-box; }
+      * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body { margin: 0; padding: 28px; color: #0a192f; font-family: Arial, sans-serif; background: #f4f6f8; }
       .receipt { width: 100%; max-width: 760px; margin: 0 auto; background: #fff; border: 1px solid #d9dee5; }
       .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 26px 30px; background: #0a192f; color: #fff; }
@@ -96,7 +118,7 @@ export const printBookingReceipt = (shipment) => {
     <article class="receipt">
       <header class="header">
         <div class="brand">
-          <img src="${escapeHtml(logoUrl)}" alt="Obech Flow Logistics logo" />
+          <img src="${escapeHtml(logoUrl)}" alt="Obech Logistics logo" />
           <div>
             <h1>${COMPANY.name}</h1>
             <p>${COMPANY.address}</p>
@@ -104,7 +126,7 @@ export const printBookingReceipt = (shipment) => {
         </div>
         <div class="title">
           <strong>Booking Receipt</strong>
-          <span>${displayValue(shipment.receipt_number)}</span>
+          <span>${displayValue(shipment.receipt_number || shipment.tracking_id)}</span>
         </div>
       </header>
 
@@ -132,7 +154,7 @@ export const printBookingReceipt = (shipment) => {
             <div><div class="label">Recipient</div><div class="value">${displayValue(shipment.receiver_name)}</div></div>
             <div><div class="label">Recipient Phone</div><div class="value">${displayValue(shipment.receiver_phone)}</div></div>
             <div><div class="label">Package</div><div class="value">${displayValue(shipment.package_type)}</div></div>
-            <div><div class="label">Delivery Vehicle</div><div class="value">${displayValue(shipment.delivery_type)}</div></div>
+            <div><div class="label">Service Type</div><div class="value">${displayValue(formatServiceType(shipment.delivery_type))}</div></div>
           </div>
         </section>
 

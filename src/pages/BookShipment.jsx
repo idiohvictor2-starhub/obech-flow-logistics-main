@@ -39,7 +39,7 @@ export default function BookShipment() {
     itemName: "",
     weight: "",
     packageType: "general",
-    deliveryType: "standard",
+    deliveryType: "Air Express",
   });
 
   const updateField = (field, value) => {
@@ -418,15 +418,16 @@ export default function BookShipment() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                      Delivery Mode
+                      Service Type
                     </label>
                     <select
                       value={form.deliveryType}
                       onChange={(e) => updateField("deliveryType", e.target.value)}
                       className="w-full border border-steel rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange/30 focus:border-orange text-navy bg-white"
                     >
-                      <option value="standard">Standard Global Delivery (5-8 days)</option>
-                      <option value="express">Express Priority Air Freight (2-4 days)</option>
+                      <option value="Air Express">Air Express</option>
+                      <option value="Air Standard">Air Standard</option>
+                      <option value="Cargos">Cargos</option>
                     </select>
                   </div>
                 </div>
